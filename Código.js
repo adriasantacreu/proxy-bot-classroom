@@ -6,6 +6,15 @@ function doGet(e) {
 }
 
 /**
+ * Funció auxiliar per forçar la sol·licitud de permisos.
+ * Executa aquesta funció manualment des de l'editor per acceptar tots els nous permisos.
+ */
+function configurarPermisos() {
+  console.log("Comprovant permisos...");
+  console.log("Si veus això, els permisos ja estan concedits correctament.");
+}
+
+/**
  * Punt d'entrada per a peticions POST.
  */
 function doPost(e) {
