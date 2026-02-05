@@ -81,7 +81,7 @@ function handleRequest(e) {
     "update_course": updateCourse,
     "delete_course": deleteCourse,
 
-    // Nivell GOD MODE (Rúbriques i Tutores)
+    // Gestió Avançada (Rúbriques i Tutors)
     "list_rubrics": listRubrics,
     "create_rubric": createRubric,
     "delete_rubric": deleteRubric,
@@ -625,7 +625,7 @@ function deleteCourse(e) {
 
 
 // ==========================================
-// SECCIÓ 7: GOD MODE (RÚBRIQUES I TUTORS)
+// SECCIÓ 7: GESTIÓ AVANÇADA (RÚBRIQUES I TUTORS)
 // ==========================================
 
 /**

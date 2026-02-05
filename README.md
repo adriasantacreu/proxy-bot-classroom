@@ -1,31 +1,31 @@
 # Proxy Bot Google Classroom (GAS) 🤖📚
 
-> **Un "God Mode" proxy para la API de Google Classroom.**
-> Gestiona cursos, tareas, notas, rúbricas y tutores desde una única API intermedia en Google Apps Script.
+> **Un proxy complet per a l'API de Google Classroom.**
+> Gestiona cursos, tasques, notes, rúbriques i tutors des d'una única API intermèdia a Google Apps Script.
 
 ---
 
 ## 🚀 Característiques
 
-Aquest script actua com a intermediari (proxy) segur entre les teves aplicacions i l'API de Google Classroom, permetent realitzar pràcticament **qualsevol acció administrativa** possible.
+Aquest script actua com a intermediari (proxy) segur entre les teves aplicacions i l'API de Google Classroom, permetent realitzar accions administratives i de gestió.
 
-### 🌟 Capacitats Principals ("God Mode")
+### 🌟 Funcionalitats Principals
 
-*   **📚 Gestió de Cursos**: Crear, llistar, arxivar i esborrar cursos complets.
+*   **📚 Gestió de Cursos**: Crear, llistar, actualitzar i esborrar cursos.
 *   **👥 Gestió de Persones**:
     *   Llistar alumnes i professors.
     *   **Invitar** nous alumnes i professors via email.
-    *   **Expulsar** membres d'un curs.
+    *   **Eliminar** membres d'un curs.
     *   Obtenir perfils d'usuari detallats.
 *   **📝 Tasques i Avaluació**:
-    *   Crear tareas (Assignments), Preguntes i Materials.
-    *   Modificar i esborrar qualsevol contingut.
-    *   **Posar Notes** (Grading) i retornar tasques.
-    *   **Rúbriques**: Crear, llegir i editar criteris d'avaluació complexos.
+    *   Crear tasques (Assignments), Preguntes i Materials.
+    *   Modificar i esborrar contingut.
+    *   **Avaluació**: Qualificar entregues i retornar tasques als alumnes.
+    *   **Rúbriques**: Crear, llegir i editar criteris d'avaluació.
 *   **📢 Comunicació**:
-    *   Publicar i gestionar anuncis al tauler.
+    *   Publicar i gestionar anuncis.
     *   Crear i organitzar Temes (Topics).
-*   **👨‍👩‍👧‍👦 Tutores (Guardians)**:
+*   **👨‍👩‍👧‍👦 Tutors legals (Guardians)**:
     *   Llistar i invitar pares/tutors legals.
     *   Eliminar vincles de tutors.
 
@@ -40,29 +40,30 @@ Aquest script actua com a intermediari (proxy) segur entre les teves aplicacions
 ### 2. Desplegament
 1.  Crea un nou projecte a Google Apps Script.
 2.  Copia el contingut de `Código.js` al teu projecte.
-3.  Activa el servei avançat de **Google Classroom API**:
-    *   Ves a "Serveis" (+), busca "Classroom" i afegeix-lo (v1).
+3.  Copia el contingut de `appsscript.json` (Manifiesto) per assegurar que es sol·liciten tots els permisos necessaris.
+4.  Activa el servei avançat de **Google Classroom API**:
+    *   Ves a "Serveis" (+), busca "Classroom" i afegeix-lo (versió v1).
 
 ### 3. Configuració de Seguretat 🔐
-El script utilitza una clau API personalitzada per evitar accessos no autoritzats.
+L'script utilitza una clau API personalitzada per evitar accessos no autoritzats.
 
-1.  A l'editor de Apps Script, ves a **Configuració del Projecte** (roda dentada).
+1.  A l'editor d'Apps Script, ves a **Configuració del Projecte** (roda dentada).
 2.  Baixa fins a **Propietats de l'Script**.
 3.  Afegeix una nova propietat:
     *   **Nom**: `API_KEY`
-    *   **Valor**: *(Inventa't una contrasenya segura, ex: `LaMevaSuperClauSecreta2026`)*
+    *   **Valor**: *(Escriu una contrasenya segura)*
 
 ### 4. Publicació
 1.  Fes clic a **Desplegar** > **Nou desplegament**.
 2.  Tipus: **Aplicació web**.
 3.  Executar com: **Jo** (User accessing).
-4.  Qui té accés: **Qualsevol** (Anyone) *(La seguretat la gestionem nosaltres via API_KEY).*
+4.  Qui té accés: **Qualsevol** (Anyone) *(La seguretat es gestiona via API_KEY).*
 
 ---
 
 ## 📖 Documentació de l'API
 
-Totes les peticions s'han de fer a la URL del teu Web App desplegat (`https://script.google.com/macros/s/.../exec`).
+Totes les peticions s'han de fer a la URL de l'Aplicació Web desplegada (`https://script.google.com/macros/s/.../exec`).
 
 ### Paràmetres Comuns
 *   `key`: La teva `API_KEY` secreta (Obligatori).
@@ -76,7 +77,7 @@ Totes les peticions s'han de fer a la URL del teu Web App desplegat (`https://sc
 | `list_courses` | Cap | Llista cursos actius. |
 | `get_course` | `courseId` | Info d'un curs. |
 | `list_students` | `courseId` | Llista alumnes. |
-| `list_teachers` | `courseId` | Llista profes. |
+| `list_teachers` | `courseId` | Llista professors. |
 | `list_courseWork` | `courseId` | Llista tasques. |
 | `list_announcements`| `courseId` | Llista anuncis. |
 | `list_submissions` | `courseId`, `courseWorkId` | Llista entregues. |
@@ -96,27 +97,22 @@ Totes les peticions s'han de fer a la URL del teu Web App desplegat (`https://sc
 | `create_material` | `courseId`, `title` | Crea material. |
 | `create_rubric` | `courseId`, `courseWorkId` | Crea rúbrica. |
 | `invite_student` | `courseId`, `email` | Invita alumne. |
-| `invite_teacher` | `courseId`, `email` | Invita profe. |
+| `invite_teacher` | `courseId`, `email` | Invita professor. |
 | `invite_guardian` | `studentId`, `email` | Invita tutor. |
 
 #### 🔴 Modificació / Esborrat (POST/GET)
 | Acció | Paràmetres | Descripció |
 | :--- | :--- | :--- |
-| `grade_submission` | `courseId`, `courseWorkId`, `id`, `submission` | Posa nota. |
+| `grade_submission` | `courseId`, `courseWorkId`, `id`, `submission` | Qualifica entrega. |
 | `return_submission`| `courseId`, `courseWorkId`, `id` | Retorna tasca. |
 | `patch_courseWork` | `courseId`, `id` | Edita tasca. |
 | `delete_courseWork`| `courseId`, `id` | Esborra tasca. |
 | `delete_course` | `id` | Esborra curs. |
-| `delete_student` | `courseId`, `userId` | Expulsa alumne. |
-
-*(Consulta el codi font per veure tots els paràmetres opcionals i detalls tècnics)*
+| `delete_student` | `courseId`, `userId` | Elimina alumne. |
 
 ---
 
 ## ⚠️ Notes Importants
 
-*   **Límits de Google**: L'API de Google té quotes diàries. No facis milers de peticions per segon.
-*   **Permisos**: L'usuari que executa el script ha de tenir els permisos adequats a Classroom (ser professor del curs, administrador, etc.) per realitzar certes accions.
-
----
-Creat amb ❤️ i molta IA.
+*   **Quotes**: L'API de Google té quotes d'ús diàries.
+*   **Permisos**: L'usuari que executa l'script ha de tenir els permisos adequats a Classroom (ser professor del curs, administrador del domini, etc.) per realitzar certes accions, especialment les relacionades amb Guardians o la creació de cursos nivell domini.
