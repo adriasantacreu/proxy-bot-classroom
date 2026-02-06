@@ -75,40 +75,55 @@ Totes les peticions s'han de fer a la URL de l'Aplicació Web desplegada (`https
 | Acció | Paràmetres | Descripció |
 | :--- | :--- | :--- |
 | `list_courses` | Cap | Llista cursos actius. |
-| `get_course` | `courseId` | Info d'un curs. |
-| `list_students` | `courseId` | Llista alumnes. |
+| `get_course` | `courseId` | Info detallada d'un curs. |
+| `list_students` | `courseId` | Llista alumnes matriculats. |
 | `list_teachers` | `courseId` | Llista professors. |
-| `list_courseWork` | `courseId` | Llista tasques. |
-| `list_announcements`| `courseId` | Llista anuncis. |
-| `list_submissions` | `courseId`, `courseWorkId` | Llista entregues. |
-| `list_topics` | `courseId` | Llista temes. |
-| `list_materials` | `courseId` | Llista materials. |
-| `get_user_profile` | `userId` | Perfil d'usuari. |
-| `list_rubrics` | `courseId`, `courseWorkId` | Llista rúbriques. |
-| `list_guardians` | `studentId` | Llista tutors. |
+| `list_courseWork` | `courseId` | Llista tasques (Assignments). |
+| `list_announcements`| `courseId` | Llista anuncis del tauler. |
+| `list_submissions` | `courseId`, `courseWorkId` | Llista entregues d'alumnes. |
+| `list_topics` | `courseId` | Llista temes (Topics). |
+| `list_materials` | `courseId` | Llista materials (recursos). |
+| `list_rubrics` | `courseId`, `courseWorkId` | Llista rúbriques d'una tasca. |
+| `list_guardians` | `studentId` | Llista tutors d'un alumne. |
+| `get_user_profile` | `userId` | Obté el perfil complet d'un usuari. |
 
-#### 🟡 Escriptura / creació (POST/GET)
-| Acció | Paràmetres obligatoris | Descripció |
+#### 🟡 Creació (POST)
+| Acció | Paràmetres Obligatoris | Descripció |
 | :--- | :--- | :--- |
-| `create_course` | `name` | Crea un curs nou. |
-| `create_announcement`| `courseId`, `text` | Publica anunci. |
-| `create_courseWork` | `courseId`, `title` | Crea tasca. |
-| `create_topic` | `courseId`, `name` | Crea tema. |
-| `create_material` | `courseId`, `title` | Crea material. |
-| `create_rubric` | `courseId`, `courseWorkId` | Crea rúbrica. |
-| `invite_student` | `courseId`, `email` | Invita alumne. |
-| `invite_teacher` | `courseId`, `email` | Invita professor. |
-| `invite_guardian` | `studentId`, `email` | Invita tutor. |
+| `create_course` | `name` | Crea un nou curs. |
+| `create_announcement`| `courseId`, `text` | Publica un anunci al tauler. |
+| `create_courseWork` | `courseId`, `title` | Crea una tasca (Assignment). |
+| `create_material` | `courseId`, `title` | Crea un material de recurs. |
+| `create_topic` | `courseId`, `name` | Crea un nou tema. |
+| `create_rubric` | `courseId`, `courseWorkId` | Crea una rúbrica d'avaluació. |
+| `upload_to_classroom`| `courseId`, `title`, `base64Data`, `fileName` | Puja fitxer a Drive i crea Material. |
+| `invite_student` | `courseId`, `email` | Envia invitació a alumne. |
+| `invite_teacher` | `courseId`, `email` | Envia invitació a professor. |
+| `invite_guardian` | `studentId`, `email` | Envia invitació a tutor legal. |
 
-#### 🔴 Modificació / esborrat (POST/GET)
+#### � Modificació i organització (POST)
 | Acció | Paràmetres | Descripció |
 | :--- | :--- | :--- |
-| `grade_submission` | `courseId`, `courseWorkId`, `id`, `submission` | Qualifica entrega. |
-| `return_submission`| `courseId`, `courseWorkId`, `id` | Retorna tasca. |
-| `patch_courseWork` | `courseId`, `id` | Edita tasca. |
-| `delete_courseWork`| `courseId`, `id` | Esborra tasca. |
-| `delete_course` | `id` | Esborra curs. |
-| `delete_student` | `courseId`, `userId` | Elimina alumne. |
+| `update_course` | `id` | Actualitza dades del curs (ex: arxivar). |
+| `patch_courseWork` | `courseId`, `id` | Modifica una tasca existent. |
+| `patch_announcement` | `courseId`, `id` | Modifica el text d'un anunci. |
+| `patch_topic` | `courseId`, `id` | Canvia el nom d'un tema. |
+| `patch_rubric` | `courseId`, `courseWorkId`, `id` | Modifica criteris d'una rúbrica. |
+| `move_to_topic` | `courseId`, `courseWorkId`, `topicId` | Mou una tasca dins d'un tema. |
+| `grade_submission` | `courseId`, `courseWorkId`, `id`, `submission` | Posa nota a una entrega. |
+| `return_submission`| `courseId`, `courseWorkId`, `id` | Retorna la tasca a l'alumne. |
+
+#### 🔴 Esborrat (POST)
+| Acció | Paràmetres | Descripció |
+| :--- | :--- | :--- |
+| `delete_course` | `id` | Esborra permanentment un curs. |
+| `delete_courseWork`| `courseId`, `id` | Esborra una tasca. |
+| `delete_announcement`| `courseId`, `id` | Esborra un anunci. |
+| `delete_material` | `courseId`, `id` | Esborra un material. |
+| `delete_rubric` | `courseId`, `courseWorkId`, `id` | Esborra una rúbrica. |
+| `delete_student` | `courseId`, `userId` | Expulsa un alumne del curs. |
+| `delete_teacher` | `courseId`, `userId` | Expulsa un professor. |
+| `delete_guardian` | `studentId`, `guardianId` | Elimina un tutor legal. |
 
 ---
 
