@@ -278,6 +278,7 @@ function createCourseWork(e) {
   const title = data.title || e.parameter.title;
   const description = data.description || e.parameter.description;
   const workType = data.workType || e.parameter.workType || "ASSIGNMENT";
+  const topicId = data.topicId || e.parameter.topicId;
 
   if (!courseId || !title) throw new Error("Falta 'courseId' o 'title'");
 
@@ -287,6 +288,11 @@ function createCourseWork(e) {
     workType: workType,
     state: "PUBLISHED"
   };
+
+  if (topicId) {
+    courseWork.topicId = topicId;
+  }
+
   return Classroom.Courses.CourseWork.create(courseWork, courseId);
 }
 
@@ -322,6 +328,7 @@ function createMaterial(e) {
   const courseId = data.courseId || e.parameter.courseId;
   const title = data.title || e.parameter.title;
   const description = data.description || e.parameter.description;
+  const topicId = data.topicId || e.parameter.topicId;
 
   if (!courseId || !title) throw new Error("Falta 'courseId' o 'title'");
 
@@ -330,6 +337,11 @@ function createMaterial(e) {
     description: description,
     state: "PUBLISHED"
   };
+
+  if (topicId) {
+    material.topicId = topicId;
+  }
+
   return Classroom.Courses.CourseWorkMaterials.create(material, courseId);
 }
 
