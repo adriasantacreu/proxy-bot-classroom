@@ -12,24 +12,18 @@ function doGet(e) {
  */
 function configurarPermisos() {
   console.log("Iniciant comprovació de permisos...");
+  console.log("A continuació es realitzaran crides a Drive i Classroom.");
+  console.log("Si el script s'atura i demana revisió de permisos, accepta'ls.");
 
-  // 1. Forçar permisos de Drive
-  try {
-    const root = DriveApp.getRootFolder();
-    console.log("Permisos de Drive: OK");
-  } catch (e) {
-    console.log("Atenció: Faltan permisos de Drive.");
-  }
+  // 1. Forçar permisos de Drive (sense try-catch per forçar el prompt)
+  const root = DriveApp.getRootFolder();
+  console.log("Permisos de Drive: OK (Nom de l'arrel: " + root.getName() + ")");
 
   // 2. Forçar permisos de Classroom
-  try {
-    const courses = Classroom.Courses.list({ pageSize: 1 });
-    console.log("Permisos de Classroom: OK");
-  } catch (e) {
-    console.log("Atenció: Faltan permisos de Classroom.");
-  }
+  const courses = Classroom.Courses.list({ pageSize: 1 });
+  console.log("Permisos de Classroom: OK");
 
-  console.log("Procés finalitzat. Si no has vist cap diàleg, tot està correcte.");
+  console.log("Tots els permisos estan concedits correctament.");
 }
 
 /**
