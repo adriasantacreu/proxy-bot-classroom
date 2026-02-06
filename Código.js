@@ -1,10 +1,60 @@
 /**
  * Punt d'entrada per a peticions GET.
+ * Si hi ha paràmetres 'action', actua com API.
+ * Si no hi ha paràmetres, mostra la interfície Web per generar claus.
  */
 function doGet(e) {
-  return handleRequest(e);
+  if (e.parameter && e.parameter.action) {
+    return handleRequest(e);
+  } else {
+    // Retorna la interfície web HTML
+    return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('Proxy Bot Console')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
 }
 
+/**
+ * Retorna l'email de l'usuari actiu i la seva clau actual (si en té).
+ * Cridat des del frontend (index.html).
+ */
+function getUserInfo() {
+  const email = Session.getActiveUser().getEmail();
+  const props = PropertiesService.getScriptProperties();
+  // Busquem la clau associada a aquest usuari
+  const key = props.getProperty("USER_" + email);
+
+  return {
+    email: email,
+    key: key || null
+  };
+}
+
+/**
+ * Genera una nova API Key per a l'usuari actual.
+ * Cridat des del frontend (index.html).
+ */
+function generateUserApiKey() {
+  const email = Session.getActiveUser().getEmail();
+  const props = PropertiesService.getScriptProperties();
+
+  // Generar clau aleatòria (UUID + sufix)
+  const newKey = Utilities.getUuid() + "-" + Math.random().toString(36).substring(7);
+
+  // Si l'usuari ja tenia una clau, esborrem la referència inversa antiga
+  const oldKey = props.getProperty("USER_" + email);
+  if (oldKey) {
+    props.deleteProperty("KEY_" + oldKey);
+  }
+
+  // Guardar nous mapejos:
+  // 1. "USER_email" -> "KEY" (Per saber quina clau té l'usuari)
+  // 2. "KEY_valor" -> "email" (Per validar ràpidament si la clau rebuda és vàlida)
+  props.setProperty("USER_" + email, newKey);
+  props.setProperty("KEY_" + newKey, email);
+
+  return newKey;
+}
 
 
 /**
@@ -16,22 +66,39 @@ function doPost(e) {
 
 /**
  * Gestor principal de peticions.
- * Verifica la seguretat i delega l'acció a la funció corresponent.
+ * Verifica la seguretat (base de dades de claus + clau mestra) i delega l'acció.
  */
 function handleRequest(e) {
-  const API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY");
-  const key = e.parameter.key;
+  const MASTER_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY");
+  const providedKey = e.parameter.key;
 
   // 1. Verificació de seguretat
-  if (!API_KEY) {
-    return ContentService.createTextOutput(JSON.stringify({ error: "API_KEY no configurada a les propietats de l'script" }))
+  let authorizedUser = null;
+
+  if (!providedKey) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "Falta API Key (paràmetre 'key')" }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  if (key !== API_KEY) {
-    return ContentService.createTextOutput(JSON.stringify({ error: "⛔ Accés denegat" }))
+  // A) Comprovar si és la Clau Mestra (legacy / admin)
+  if (providedKey === MASTER_KEY) {
+    authorizedUser = "ADMIN (Master Key)";
+  }
+  // B) Comprovar si és una clau d'usuari generada
+  else {
+    const ownerEmail = PropertiesService.getScriptProperties().getProperty("KEY_" + providedKey);
+    if (ownerEmail) {
+      authorizedUser = ownerEmail;
+    }
+  }
+
+  if (!authorizedUser) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "⛔ Accés denegat: API Key invàlida o revocada" }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+
+  // Log d'accés (opcional per debug)
+  console.log(`Petició autoritzada per: ${authorizedUser}`);
 
   const action = e.parameter.action;
   if (!action) {
