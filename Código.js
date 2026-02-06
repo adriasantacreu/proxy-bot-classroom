@@ -5,26 +5,7 @@ function doGet(e) {
   return handleRequest(e);
 }
 
-/**
- * Funció auxiliar per forçar la sol·licitud de permisos.
- * Executa aquesta funció manualment des de l'editor per acceptar tots els nous permisos.
- * Realitza crides trivials a les APIs per disparar els diàlegs d'autorització.
- */
-function configurarPermisos() {
-  console.log("Iniciant comprovació de permisos...");
-  console.log("A continuació es realitzaran crides a Drive i Classroom.");
-  console.log("Si el script s'atura i demana revisió de permisos, accepta'ls.");
 
-  // 1. Forçar permisos de Drive (sense try-catch per forçar el prompt)
-  const root = DriveApp.getRootFolder();
-  console.log("Permisos de Drive: OK (Nom de l'arrel: " + root.getName() + ")");
-
-  // 2. Forçar permisos de Classroom
-  const courses = Classroom.Courses.list({ pageSize: 1 });
-  console.log("Permisos de Classroom: OK");
-
-  console.log("Tots els permisos estan concedits correctament.");
-}
 
 /**
  * Punt d'entrada per a peticions POST.
