@@ -97,7 +97,11 @@ function handleRequest(e) {
     "patch_rubric": patchRubric,
     "list_guardians": listGuardians,
     "invite_guardian": inviteGuardian,
-    "delete_guardian": deleteGuardian
+    "delete_guardian": deleteGuardian,
+
+    // Gestió de Fitxers i Organització
+    "upload_to_classroom": uploadToClassroom,
+    "move_to_topic": moveToTopic
   };
 
   try {
@@ -752,6 +756,82 @@ function deleteGuardian(e) {
   const guardianId = e.parameter.guardianId;
   if (!studentId || !guardianId) throw new Error("Falta 'studentId' o 'guardianId'");
   return Classroom.UserProfiles.Guardians.remove(studentId, guardianId);
+}
+
+
+// ==========================================
+// SECCIÓ 8: GESTIÓ DE FITXERS I ORGANITZACIÓ
+// ==========================================
+
+/**
+ * Puja un fitxer a Drive i el crea com a Material a Classroom.
+ * @param {GoogleAppsScript.Events.DoPost} e - L'objecte de petició.
+ * @param {string} courseId - ID del curs.
+ * @param {string} title - Títol del material.
+ * @param {string} base64Data - Contingut del fitxer en Base64.
+ * @param {string} fileName - Nom del fitxer.
+ * @param {string} [topicId] - ID del tema (opcional).
+ * @param {string} [mimeType] - Tipus MIME (opcional, per defecte PDF).
+ */
+function uploadToClassroom(e) {
+  const data = getPayload(e);
+  const courseId = data.courseId || e.parameter.courseId;
+  const title = data.title || e.parameter.title;
+  const base64Data = data.base64Data;
+  const fileName = data.fileName;
+  const mimeType = data.mimeType || MimeType.PDF;
+  const topicId = data.topicId || e.parameter.topicId;
+
+  if (!courseId || !title || !base64Data || !fileName) {
+    throw new Error("Falten paràmetres: courseId, title, base64Data, fileName");
+  }
+
+  // 1. Decodificar i crear fitxer a Drive
+  const decodedBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
+  const driveFile = DriveApp.createFile(decodedBlob);
+
+  // 2. Crear el material a Classroom vinculant el fitxer
+  const material = {
+    title: title,
+    state: "PUBLISHED",
+    materials: [
+      {
+        driveFile: {
+          driveFile: {
+            id: driveFile.getId(),
+            title: fileName
+          }
+        }
+      }
+    ]
+  };
+
+  if (topicId) {
+    material.topicId = topicId;
+  }
+
+  return Classroom.Courses.CourseWorkMaterials.create(material, courseId);
+}
+
+/**
+ * Mou una tasca o material a un tema específic.
+ * @param {GoogleAppsScript.Events.DoPost} e - L'objecte de petició.
+ * @param {string} courseId - ID del curs.
+ * @param {string} courseWorkId - ID de la tasca.
+ * @param {string} topicId - ID del tema destí.
+ */
+function moveToTopic(e) {
+  const data = getPayload(e);
+  const courseId = data.courseId || e.parameter.courseId;
+  const courseWorkId = data.courseWorkId || data.id || e.parameter.courseWorkId || e.parameter.id;
+  const topicId = data.topicId || e.parameter.topicId;
+
+  if (!courseId || !courseWorkId) throw new Error("Falta courseId o courseWorkId");
+
+  const updateMask = "topicId";
+  const content = { topicId: topicId || "" }; // Si no hi ha topicId, el buidem (moure a capçalera)
+
+  return Classroom.Courses.CourseWork.patch(content, courseId, courseWorkId, { updateMask: updateMask });
 }
 
 
