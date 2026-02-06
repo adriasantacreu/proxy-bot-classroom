@@ -44,12 +44,9 @@ Aquest script actua com a intermediari (proxy) segur entre les teves aplicacions
 4.  Activa el servei avançat de **Google Classroom API**:
     *   Ves a "Serveis" (+), busca "Classroom" i afegeix-lo (versió v1).
 
-### 3. Configuració de seguretat (Administrador) 🛡️
-L'script utilitza un sistema de doble clau:
-1.  **Clau Mestra (API_KEY)**: Per a l'administrador o sistemes legacy.
-2.  **Claus d'Usuari**: Generades automàticament per a cada professor/usuari.
+### 3. Configuració de seguretat �
+L'script utilitza una clau API personalitzada per evitar accessos no autoritzats.
 
-Per configurar la clau mestra inicial:
 1.  A l'editor d'Apps Script, ves a **Configuració del projecte** (roda dentada).
 2.  Baixa fins a **Propietats de l'script**.
 3.  Afegeix una nova propietat:
@@ -60,29 +57,16 @@ Per configurar la clau mestra inicial:
 1.  Fes clic a **Desplegar** > **Nou desplegament**.
 2.  Tipus: **Aplicació web**.
 3.  Executar com: **Jo** (User accessing).
-4.  Qui té accés: **Qualsevol** (Anyone) *(IMPORTANT: No posis 'Anonymous'. Els usuaris s'han de loguejar amb Google per generar la seva clau).*
-
----
-
-## 🔑 Obtenció de claus API (Usuaris)
-
-Aquest bot inclou un **portal d'autoservei** perquè cada usuari tingui la seva pròpia clau.
-
-1.  Obre la **URL de l'Aplicació Web** al navegador (la que acaba en `/exec`).
-2.  Inicia sessió amb el teu compte de Google.
-3.  Veuràs una pantalla de gestió on podràs **generar una nova API Key**.
-4.  Copia aquesta clau. És la que hauràs de fer servir en totes les teves peticions.
-
-> **Nota:** L'administrador pot revocar claus o veure qui està fent servir l'API consultant les *Propietats de l'Script*.
+4.  Qui té accés: **Qualsevol** (Anyone) *(La seguretat es gestiona via API_KEY).*
 
 ---
 
 ## 📖 Documentació de l'API
 
-Totes les peticions s'han de fer a la URL de l'Aplicació Web desplegada.
+Totes les peticions s'han de fer a la URL de l'Aplicació Web desplegada (`https://script.google.com/macros/s/.../exec`).
 
 ### Paràmetres comuns
-*   `key`: La teva **API Key personal** (generada a la web) o la clau mestra. (Obligatori).
+*   `key`: La teva `API_KEY` secreta (Obligatori).
 *   `action`: El nom de l'acció a executar (Obligatori).
 
 ### Llista d'accions disponibles
