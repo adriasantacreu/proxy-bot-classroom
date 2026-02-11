@@ -103,7 +103,7 @@ Aquesta és l'acció més potent. Permet crear una tasca completa amb títol, de
       "dueTime": { "hours": 23, "minutes": 59 },           // Opcional
       "topicId": "123456",              // Opcional (ID del tema)
       "materials": [                    // Opcional: Llista d'adjunts
-        { "img": { "url": "http://...", "title": "Imatge" } }, // Link
+        { "link": { "url": "http://...", "title": "Imatge" } }, // Link
         { "driveFile": { "driveFile": { "id": "FILE_ID", "title": "Nom Fitxer" } } }, // Drive
         { "youtubeVideo": { "id": "VIDEO_ID", "title": "Títol Video" } } // YouTube
       ]
