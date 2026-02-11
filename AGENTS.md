@@ -1,29 +1,23 @@
-# 🤖 Agent Information (AGENTS.md)
+# 🤖 Context i Arquitectura del Projecte (AGENTS.md)
 
-Aquest fitxer conté informació crítica sobre l'estat i l'arquitectura del projecte per a futurs agents d'IA o col·laboradors humans.
+## 📝 Origen i Context
+Aquest projecte ha estat generat mitjançant **Vibecoding**. Neix de la necessitat de crear una infraestructura robusta per configurar bots autònoms o semiautònoms que interactuïn amb Google Classroom.
 
-## 📝 Resum del Projecte
-**Proxy-Classroom-Bot-V2** és un middleware construït amb Google Apps Script que actua com a pont entre aplicacions externes (com un Bot de Telegram o un Tester Web) i l'API de Google Classroom. El seu objectiu és simplificar l'autenticació i oferir una interfície més neta i robusta.
+### Evolució Tècnica
+1.  **Intent inicial (MCP)**: El projecte va començar amb l'intent de crear un Model Context Protocol (MCP). Tot i que era una idea atractiva, la gestió de permisos i l'arquitectura de seguretat de Google feien que aquesta solució fos extremadament complexa i poc pràctica per a un entorn de bots distribuïts.
+2.  **Solució actual (Proxy GAS)**: Es va optar per la creació d'aquest Proxy a Google Apps Script (GAS). Aquesta arquitectura permet centralitzar la gestió d'OAuth2 i permisos en un sol punt, oferint una API neta i accessible via Web App.
 
-## 🏛️ Arquitectura Actual (v55 - Feb 2026)
-*   **Dispatcher (`handleRequest`)**: Centralitzat a `Código.js`. Rep totes les peticions `GET` i `POST`.
-*   **Unified Params (`getParams`)**: Una funció clau que mergeja els paràmetres de l'URL amb el body JSON del `POST`. Això fa que l'API sigui "agnòstica" al mètode d'enviament.
-*   **Grading System**: S'ha passat d'una lògica complexa de patches manuals a una funció simplificada que rep un sol valor `grade` i s'encarrega d'actualitzar tant el `draftGrade` com el `assignedGrade`.
-*   **Frontend**: L'`index.html` actua com a client de referència i tester, utilitzant un sistema de `SCHEMAS` dinàmics per generar els formularis de l'API.
+## 🏛️ Arquitectura i Decisions Clau (v55)
+*   **Unified Params (`getParams`)**: Una de les grans dificultats va ser la inconsistència de com GAS rep les dades (URL params vs JSON body). Hem creat un helper que unifica ambdues fonts, fent que l'API sigui 100% robusta per a qualsevol client.
+*   **Simplified Grading**: Vam haver de refer la lògica de qualificació per superar les limitacions de l'API de Classroom, passant d'un model de "patch" complex a una funció que gestiona automàticament els múltiples estats d'una nota (`draft` vs `assigned`).
 
-## 🚀 Desplegament
-*   **Clasp**: S'utilitza per a la sincronització local -> GAS. 
-*   **Versions**: Actualment a la **Versió 55**. 
-*   **Deploy ID**: `AKfycbz5hvlbdd8vumKsAKQNrvwpxM4DUeHo1uMcAZE8vGKTfO4ZXnavqe4CEEGOqkTduMvAtw` (sempre s'ha de mantenir estable).
-*   Consulteu **`DEPLOY_GUIDE.md`** per a instruccions detallades sobre com gestionar el límit de 20 desplegaments de Google.
+## �️ Dificultats Superades
+*   **Límit de Desplegaments**: Google Apps Script té un límit rígid de 20 desplegaments. Hem superat aquesta barrera implementant una metodologia de gestió de versions fixa (veure `DEPLOY_GUIDE.md`) que permet actualitzar el bot sense canviar la URL d'accés.
+*   **Gestió de Permisos de Domini**: Moltes accions (crear cursos, convidar professors externs) fallaven per polítiques de Google Workspace Education. Hem documentat aquests casos a l'API.md per diferenciar clarament els errors de xarxa/codi dels de política de domini.
+*   **Sincronització Local-Núvol**: L'ús de `clasp` ha estat vital per mantenir el control de versions a GitHub mentre es treballa en l'entorn tancat de Google.
 
-## ⚠️ Notes de Seguretat i Permisos
-*   **API_KEY**: Guardada a `PropertiesService`. Mai s'ha de hardcodejar al repositori.
-*   **403 Forbidden**: Si una acció falla per permisos, sol ser per configuració de domini (Workspace for Education) o perquè el curs s'ha d'arxivar abans de ser esborrat.
-
-## ✅ Estat del Repo
-*   Net de fitxers temporals de prova (`*.json`, `*.tmp`).
-*   Totes les funcions testeades i validades amb crides `curl` reals.
+## 🚀 Estat Actual
+El projecte es troba en un estat estable amb totes les funcions estandarditzades. L'interfície web (`index.html`) s'ha anat adaptant per oferir tots els camps que el backend permet, garantint que el tester és una representació real del potencial del bot.
 
 ---
-*Creat per l'Agent Antigravity el 11 de febrer de 2026.* 🦾
+*Projecte tancat en la Versió 55 estable.* 🦾
