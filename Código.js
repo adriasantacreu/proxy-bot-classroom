@@ -18,15 +18,7 @@ function doPost(e) {
  */
 function handleRequest(e) {
   const API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY");
-
-  // Detectar dades si vénen al body (POST) o a la URL (GET)
-  let data = {};
-  try {
-    if (e.postData && e.postData.contents) {
-      data = JSON.parse(e.postData.contents);
-    }
-  } catch (err) { /* no és JSON */ }
-
+  const data = getPayload(e);
   const key = e.parameter.key || data.key;
   const action = e.parameter.action || data.action;
 
@@ -37,7 +29,7 @@ function handleRequest(e) {
   }
 
   if (key !== API_KEY) {
-    return ContentService.createTextOutput(JSON.stringify({ error: "⛔ Accés denegat" }))
+    return ContentService.createTextOutput(JSON.stringify({ error: "⛔ Accés denegat: Key incorrecta" }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -47,6 +39,7 @@ function handleRequest(e) {
   }
 
   // 2. Map d'accions (Dispatcher)
+  // Això enllaça el nom de l'acció amb la seva funció
   const actions = {
     // Lectura bàsica
     "list_courses": listCourses,
@@ -116,7 +109,7 @@ function handleRequest(e) {
       // Executa la funció corresponent passant-li els paràmetres 'e'
       result = actions[action](e);
     } else {
-      throw new Error(`Acció desconeguda: ${action}`);
+      throw new Error(`Acció desconeguda: ${action}. Revisa si has publicat la darrera versió de l'script.`);
     }
 
     return ContentService.createTextOutput(JSON.stringify(result))
@@ -139,14 +132,15 @@ function explainWithAI(e) {
 
   const data = getPayload(e);
   const jsonToExplain = data.json_content;
-  if (!jsonToExplain) throw new Error("Falta 'json_content' per explicar");
+  if (!jsonToExplain) throw new Error("Falta 'json_content' al body de la petició");
 
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${GOOGLE_AI_KEY}`;
 
-  const prompt = `Actua com un assistent expert en Google Classroom per a professors no tècnics. 
-  Explica en català de forma senzilla i amable què significa el següent resultat JSON d'una operació de l'API. 
-  No usis tecnicismes si no és necessari. Si és un error, explica com solucionar-ho. 
-  Resultat JSON: ${JSON.stringify(jsonToExplain)}`;
+  const prompt = `Ets un assistent expert en Google Classroom. 
+  Explica en català de forma molt senzilla i amable per a un professor què ha passat amb aquest resultat JSON.
+  Si és una llista, resumeix quants elements hi ha. Si és un error, digues què ha fallat.
+  NO usis codi, només text explicatiu.
+  Resultat: ${JSON.stringify(jsonToExplain)}`;
 
   const payload = {
     contents: [{ parts: [{ text: prompt }] }]

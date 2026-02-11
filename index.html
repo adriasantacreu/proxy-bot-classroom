@@ -605,6 +605,7 @@
                     try {
                         const aiRes = await fetch(`${url}?action=explain_json&key=${key}`, {
                             method: 'POST',
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
                             body: JSON.stringify({ action: 'explain_json', key, json_content: json })
                         });
                         const aiJson = await aiRes.json();
