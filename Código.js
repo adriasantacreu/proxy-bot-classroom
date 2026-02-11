@@ -5,8 +5,6 @@ function doGet(e) {
   return handleRequest(e);
 }
 
-
-
 /**
  * Punt d'entrada per a peticions POST.
  */
@@ -61,11 +59,14 @@ function handleRequest(e) {
 
     // Gestió Avançada (Modificacions)
     "patch_courseWork": patchCourseWork,
+    "update_courseWork": updateCourseWork,
     "delete_courseWork": deleteCourseWork,
     "delete_announcement": deleteAnnouncement,
     "patch_announcement": patchAnnouncement,
     "patch_topic": patchTopic,
     "delete_material": deleteMaterial,
+    "patch_material": patchMaterial,
+    "update_material": updateMaterial,
 
     // Qualificacions / Feedback
     "grade_submission": gradeSubmission,
@@ -94,6 +95,7 @@ function handleRequest(e) {
 
     // Gestió de Fitxers i Organització
     "upload_to_classroom": uploadToClassroom,
+    "upload_file": uploadFile,
     "move_to_topic": moveToTopic
   };
 
@@ -127,7 +129,7 @@ function handleRequest(e) {
  * @returns {object[]} Una llista d'objectes de curs.
  */
 function listCourses(e) {
-  return Classroom.Courses.list({ courseStates: ["ACTIVE"] }).courses || [];
+  return Classroom.Courses.list({ courseStates: ["ACTIVE", "PROVISIONED"] }).courses || [];
 }
 
 /**
@@ -279,6 +281,11 @@ function createCourseWork(e) {
   const description = data.description || e.parameter.description;
   const workType = data.workType || e.parameter.workType || "ASSIGNMENT";
   const topicId = data.topicId || e.parameter.topicId;
+  const maxPoints = data.maxPoints || e.parameter.maxPoints;
+  const materials = data.materials; // array of {link:{url,title}} or {driveFile:{driveFile:{id,title}}}
+  const dueDate = data.dueDate; // {year, month, day}
+  const dueTime = data.dueTime; // {hours, minutes}
+  const state = data.state || "PUBLISHED";
 
   if (!courseId || !title) throw new Error("Falta 'courseId' o 'title'");
 
@@ -286,11 +293,32 @@ function createCourseWork(e) {
     title: title,
     description: description,
     workType: workType,
-    state: "PUBLISHED"
+    state: state
   };
 
   if (topicId) {
     courseWork.topicId = topicId;
+  }
+  if (maxPoints !== undefined && maxPoints !== null) {
+    courseWork.maxPoints = Number(maxPoints);
+  }
+  if (materials && Array.isArray(materials)) {
+    courseWork.materials = materials;
+  }
+  if (dueDate) {
+    courseWork.dueDate = dueDate;
+  }
+  if (dueTime) {
+    courseWork.dueTime = dueTime;
+  }
+  // Opcions per a MULTIPLE_CHOICE_QUESTION
+  const choices = data.choices;
+  if (choices && Array.isArray(choices) && workType === "MULTIPLE_CHOICE_QUESTION") {
+    courseWork.multipleChoiceQuestion = { choices: choices };
+  }
+  // Flag per associar amb el developer (API)
+  if (data.associatedWithDeveloper !== undefined) {
+    courseWork.associatedWithDeveloper = data.associatedWithDeveloper;
   }
 
   return Classroom.Courses.CourseWork.create(courseWork, courseId);
@@ -329,17 +357,23 @@ function createMaterial(e) {
   const title = data.title || e.parameter.title;
   const description = data.description || e.parameter.description;
   const topicId = data.topicId || e.parameter.topicId;
+  const materials = data.materials;
+  const state = data.state || "PUBLISHED"; // Permetre DRAFT
 
   if (!courseId || !title) throw new Error("Falta 'courseId' o 'title'");
 
   const material = {
     title: title,
     description: description,
-    state: "PUBLISHED"
+    state: state
   };
 
   if (topicId) {
     material.topicId = topicId;
+  }
+
+  if (materials && Array.isArray(materials)) {
+    material.materials = materials;
   }
 
   return Classroom.Courses.CourseWorkMaterials.create(material, courseId);
@@ -414,6 +448,27 @@ function deleteMaterial(e) {
   const id = e.parameter.id;
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.CourseWorkMaterials.remove(courseId, id);
+}
+
+/**
+ * Actualitza parcialment un material (courseWorkMaterials).
+ * @param {GoogleAppsScript.Events.DoGet|GoogleAppsScript.Events.DoPost} e - L'objecte d'esdeveniment de la petició.
+ * @param {string} e.parameter.courseId - L'ID del curs.
+ * @param {string} e.parameter.id - L'ID del material.
+ * @param {string} [e.parameter.updateMask="title,description,state"] - Camps a actualitzar.
+ * @param {object} [e.postData.contents] - Dades JSON amb 'courseId', 'id', 'updateMask', i l'objecte 'material' amb els camps a modificar.
+ * @returns {object} L'objecte de material actualitzat.
+ * @throws {Error} Si falta 'courseId' o 'id'.
+ */
+function patchMaterial(e) {
+  const data = getPayload(e);
+  const courseId = data.courseId || e.parameter.courseId;
+  const id = data.id || e.parameter.id;
+  const updateMask = data.updateMask || e.parameter.updateMask || "title,description,state";
+  const material = data.material || {};
+
+  if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
+  return Classroom.Courses.CourseWorkMaterials.patch(material, courseId, id, { updateMask: updateMask });
 }
 
 /**
@@ -621,7 +676,7 @@ function createCourse(e) {
 function updateCourse(e) {
   const data = getPayload(e);
   const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || e.parameter.updateMask || "name,courseState";
+  const updateMask = data.updateMask || e.parameter.updateMask || "name";
   const course = data.course || {};
 
   if (!id) throw new Error("Falta 'id' del curs");
@@ -819,6 +874,35 @@ function uploadToClassroom(e) {
 }
 
 /**
+ * Puja un fitxer codificat en base64 a Google Drive i retorna la informació del fitxer.
+ * Útil per obtenir l'ID del fitxer i després adjuntar-lo a tasques o materials.
+ * @param {GoogleAppsScript.Events.DoPost} e - L'objecte de petició.
+ * @param {string} base64Data - Dades del fitxer en base64.
+ * @param {string} fileName - Nom del fitxer.
+ * @param {string} [mimeType=application/pdf] - Tipus MIME del fitxer.
+ * @returns {object} Informació del fitxer: id, name, url.
+ */
+function uploadFile(e) {
+  var data = getPayload(e);
+  var base64Data = data.base64Data;
+  var fileName = data.fileName;
+  var mimeType = data.mimeType || "application/pdf";
+
+  if (!base64Data || !fileName) {
+    throw new Error("Falta 'base64Data' o 'fileName'");
+  }
+
+  var decodedBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
+  var driveFile = DriveApp.createFile(decodedBlob);
+
+  return {
+    id: driveFile.getId(),
+    name: driveFile.getName(),
+    url: driveFile.getUrl()
+  };
+}
+
+/**
  * Mou una tasca o material a un tema específic.
  * @param {GoogleAppsScript.Events.DoPost} e - L'objecte de petició.
  * @param {string} courseId - ID del curs.
@@ -837,6 +921,72 @@ function moveToTopic(e) {
   const content = { topicId: topicId || "" }; // Si no hi ha topicId, el buidem (moure a capçalera)
 
   return Classroom.Courses.CourseWork.patch(content, courseId, courseWorkId, { updateMask: updateMask });
+}
+
+
+
+/**
+ * Substitueix completament una tasca (courseWork).
+ * Útil per afegir/treure materials via update (PUT).
+ */
+function updateCourseWork(e) {
+  const data = getPayload(e);
+  const courseId = data.courseId || e.parameter.courseId;
+  const id = data.id || e.parameter.id;
+  const courseWork = data.courseWork || {};
+
+  if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
+
+  // Use PATCH with explicit updateMask
+  const updateMask = "title,description,state,materials,maxPoints,workType,topicId,dueDate,dueTime,submissionModificationMode,assigneeMode";
+  const url = `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${id}?updateMask=${updateMask}`;
+  const options = {
+    method: "PATCH",
+    contentType: "application/json",
+    headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify(courseWork),
+    muteHttpExceptions: true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const json = JSON.parse(response.getContentText());
+
+  if (response.getResponseCode() >= 400) {
+    return { error: json.error || json, code: response.getResponseCode() };
+  }
+  return json;
+}
+
+/**
+ * Actualitza completament un material (courseWorkMaterials) via REST API directe.
+ * Això permet modificar adjunts quan la llibreria GAS falla.
+ */
+function updateMaterial(e) {
+  const data = getPayload(e);
+  const courseId = data.courseId || e.parameter.courseId;
+  const id = data.id || e.parameter.id;
+  const material = data.material || {};
+
+  if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
+
+  // Use PATCH with explicit updateMask
+  const updateMask = "title,description,state,materials,topicId";
+  const url = `https://classroom.googleapis.com/v1/courses/${courseId}/courseWorkMaterials/${id}?updateMask=${updateMask}`;
+  const options = {
+    method: "PATCH",
+    contentType: "application/json",
+    headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify(material),
+    muteHttpExceptions: true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const json = JSON.parse(response.getContentText());
+
+  if (response.getResponseCode() >= 400) {
+    return { error: json.error || json, code: response.getResponseCode() };
+  }
+  return json;
 }
 
 

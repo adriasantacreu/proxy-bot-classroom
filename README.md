@@ -5,129 +5,133 @@
 
 ---
 
-## 🚀 Característiques
-
-Aquest script actua com a intermediari (proxy) segur entre les teves aplicacions i l'API de Google Classroom, permetent realitzar accions administratives i de gestió.
-
-### 🌟 Funcionalitats principals
-
-*   **📚 Gestió de cursos**: Crear, llistar, actualitzar i esborrar cursos.
-*   **👥 Gestió de persones**:
-    *   Llistar alumnes i professors.
-    *   **Invitar** nous alumnes i professors via email.
-    *   **Eliminar** membres d'un curs.
-    *   Obtenir perfils d'usuari detallats.
-*   **📝 Tasques i avaluació**:
-    *   Crear tasques (Assignments), Preguntes i Materials.
-    *   Modificar i esborrar contingut.
-    *   **Avaluació**: Qualificar entregues i retornar tasques als alumnes.
-    *   **Rúbriques**: Crear, llegir i editar criteris d'avaluació.
-*   **📢 Comunicació**:
-    *   Publicar i gestionar anuncis.
-    *   Crear i organitzar temes (Topics).
-*   **👨‍👩‍👧‍👦 Tutors legals (Guardians)**:
-    *   Llistar i invitar pares/tutors legals.
-    *   Eliminar vincles de tutors.
+## ⚡ Accés Ràpid
+*   🎮 **[Obrir Tester Web (index.html)](index.html)**: Un tauler de control interactiu per provar el bot sense programar.
+*   📘 **[Documentació Tècnica (API.md)](API.md)**: Guia detallada de tots els endpoints, paràmetres i tipus de dades.
 
 ---
 
-## 🛠 Instal·lació i configuració
+## 🚀 Motiu i Aplicabilitat
 
-### 1. Requisits previs
-*   Un compte de Google (preferiblement Google Workspace for Education per a funcions avançades com Guardians).
-*   Accés a [Google Apps Script](https://script.google.com/).
+Aquest projecte neix de la necessitat d'interactuar amb Google Classroom des d'entorns externs (com bots de Telegram, aplicacions web, sistemes de gestió acadèmica pròpis, etc.) sense haver de lidiar amb la complexa autenticació OAuth2 de Google a cada client.
 
-### 2. Desplegament
-1.  Crea un nou projecte a Google Apps Script.
-2.  Copia el contingut de `Código.js` al teu projecte.
-3.  Copia el contingut de `appsscript.json` (Manifest) per assegurar que es sol·liciten tots els permisos necessaris.
-4.  Activa el servei avançat de **Google Classroom API**:
-    *   Ves a "Serveis" (+), busca "Classroom" i afegeix-lo (versió v1).
+**Aplicabilitat en projectes reals:**
+*   **Bots Docents:** Un bot de Telegram/Discord que permet als professors crear tasques ràpidament des del mòbil.
+*   **Sincronització Acadèmica:** Connectar el Moodle o ClickEdu de l'escola amb Classroom per crear cursos i alumnes automàticament.
+*   **Automatització d'Anuncis:** Programar anuncis setmanals o recordatoris d'examen automàtics.
+*   **Generació de Butlletins:** Extreure notes de tots els alumnes i generar informes PDF personalitzats.
 
-### 3. Configuració de seguretat �
-L'script utilitza una clau API personalitzada per evitar accessos no autoritzats.
+---
 
-1.  A l'editor d'Apps Script, ves a **Configuració del projecte** (roda dentada).
-2.  Baixa fins a **Propietats de l'script**.
+## 🌐 Publicació a GitHub Pages (Web de Test)
+
+Pots activar la web de test (`index.html`) directament a GitHub:
+1.  Ves a la pestanya **Settings** del teu repo.
+2.  Busca la secció **Pages**.
+3.  Tria la branca `main` (o `master`) i la carpeta `/ (root)`.
+4.  La teva web **Tester** estarà disponible públicament a `https://<usuari>.github.io/<repo>/`.
+
+---
+
+## 🛠 Guia de Desplegament (Deployment Script)
+
+Per posar en marxa aquest bot, necessites un projecte de Google Apps Script. Pots fer-ho manualment o utilitzant `clasp` (recomanat).
+
+### Opció A: Desplegament Manual (Copy-Paste)
+
+1.  Accedeix a [script.google.com](https://script.google.com/) i crea un **Nou Projecte**.
+2.  Ves a **Configuració del Projecte** (⚙️) i marca la casella "Show 'appsscript.json' manifest file in editor".
+3.  Copia el contingut del fitxer `appsscript.json` d'aquest repositori i substitueix el del teu editor. **Això és crític per als permisos!**
+4.  Copia el contingut de `Código.js` al fitxer `Code.gs` de l'editor.
+5.  Ves a **Serveis (+)** a l'esquerra, busca **Classroom API** i afegeix-lo (Versió v1).
+
+### Opció B: Desplegament amb CLASP (Línia de comandes)
+
+1.  Instal·la clasp: `npm install -g @google/clasp`
+2.  Fes login: `clasp login`
+3.  Crea un projecte: `clasp create --type webapp --title "Proxy Classroom Bot"`
+4.  Puja els fitxers: `clasp push`
+    *   Assegura't de pujar `appsscript.json` i `Código.js`.
+
+### Configuració de Seguretat (CRÍTIC) 🔐
+
+Per evitar que qualsevol persona pugui esborrar els teus cursos, protegim l'accés amb una clau secreta.
+
+1.  Obre el projecte a l'editor web.
+2.  Ves a **Configuració del Projecte (⚙️)** > **Propietats de l'script**.
 3.  Afegeix una nova propietat:
-    *   **Nom**: `API_KEY`
-    *   **Valor**: *(Escriu una contrasenya segura)*
+    *   Clau: `API_KEY`
+    *   Valor: `la_teva_contrasenya_super_secreta_aquí`
 
-### 4. Publicació
-1.  Fes clic a **Desplegar** > **Nou desplegament**.
-2.  Tipus: **Aplicació web**.
-3.  Executar com: **Jo** (User accessing).
-4.  Qui té accés: **Qualsevol** (Anyone) *(La seguretat es gestiona via API_KEY).*
+### Publicació com a Web App 🌐
 
----
-
-## 📖 Documentació de l'API
-
-Totes les peticions s'han de fer a la URL de l'Aplicació Web desplegada (`https://script.google.com/macros/s/.../exec`).
-
-### Paràmetres comuns
-*   `key`: La teva `API_KEY` secreta (Obligatori).
-*   `action`: El nom de l'acció a executar (Obligatori).
-
-### Llista d'accions disponibles
-
-#### 🟢 Lectura (GET)
-| Acció | Paràmetres | Descripció |
-| :--- | :--- | :--- |
-| `list_courses` | Cap | Llista cursos actius. |
-| `get_course` | `courseId` | Info detallada d'un curs. |
-| `list_students` | `courseId` | Llista alumnes matriculats. |
-| `list_teachers` | `courseId` | Llista professors. |
-| `list_courseWork` | `courseId` | Llista tasques (Assignments). |
-| `list_announcements`| `courseId` | Llista anuncis del tauler. |
-| `list_submissions` | `courseId`, `courseWorkId` | Llista entregues d'alumnes. |
-| `list_topics` | `courseId` | Llista temes (Topics). |
-| `list_materials` | `courseId` | Llista materials (recursos). |
-| `list_rubrics` | `courseId`, `courseWorkId` | Llista rúbriques d'una tasca. |
-| `list_guardians` | `studentId` | Llista tutors d'un alumne. |
-| `get_user_profile` | `userId` | Obté el perfil complet d'un usuari. |
-
-#### 🟡 Creació (POST)
-| Acció | Paràmetres Obligatoris | Descripció |
-| :--- | :--- | :--- |
-| `create_course` | `name` | Crea un nou curs. |
-| `create_announcement`| `courseId`, `text` | Publica un anunci al tauler. |
-| `create_courseWork` | `courseId`, `title` | Crea una tasca (Assignment). |
-| `create_material` | `courseId`, `title` | Crea un material de recurs. |
-| `create_topic` | `courseId`, `name` | Crea un nou tema. |
-| `create_rubric` | `courseId`, `courseWorkId` | Crea una rúbrica d'avaluació. |
-| `upload_to_classroom`| `courseId`, `title`, `base64Data`, `fileName` | Puja fitxer a Drive i crea Material. |
-| `invite_student` | `courseId`, `email` | Envia invitació a alumne. |
-| `invite_teacher` | `courseId`, `email` | Envia invitació a professor. |
-| `invite_guardian` | `studentId`, `email` | Envia invitació a tutor legal. |
-
-#### � Modificació i organització (POST)
-| Acció | Paràmetres | Descripció |
-| :--- | :--- | :--- |
-| `update_course` | `id` | Actualitza dades del curs (ex: arxivar). |
-| `patch_courseWork` | `courseId`, `id` | Modifica una tasca existent. |
-| `patch_announcement` | `courseId`, `id` | Modifica el text d'un anunci. |
-| `patch_topic` | `courseId`, `id` | Canvia el nom d'un tema. |
-| `patch_rubric` | `courseId`, `courseWorkId`, `id` | Modifica criteris d'una rúbrica. |
-| `move_to_topic` | `courseId`, `courseWorkId`, `topicId` | Mou una tasca dins d'un tema. |
-| `grade_submission` | `courseId`, `courseWorkId`, `id`, `submission` | Posa nota a una entrega. |
-| `return_submission`| `courseId`, `courseWorkId`, `id` | Retorna la tasca a l'alumne. |
-
-#### 🔴 Esborrat (POST)
-| Acció | Paràmetres | Descripció |
-| :--- | :--- | :--- |
-| `delete_course` | `id` | Esborra permanentment un curs. |
-| `delete_courseWork`| `courseId`, `id` | Esborra una tasca. |
-| `delete_announcement`| `courseId`, `id` | Esborra un anunci. |
-| `delete_material` | `courseId`, `id` | Esborra un material. |
-| `delete_rubric` | `courseId`, `courseWorkId`, `id` | Esborra una rúbrica. |
-| `delete_student` | `courseId`, `userId` | Expulsa un alumne del curs. |
-| `delete_teacher` | `courseId`, `userId` | Expulsa un professor. |
-| `delete_guardian` | `studentId`, `guardianId` | Elimina un tutor legal. |
+1.  Fes clic al botó **Desplegar (Deploy)** > **Nou desplegament**.
+2.  Selecciona tipus: **Aplicació web**.
+3.  Configuració:
+    *   **Descripció**: "Versió 1.0"
+    *   **Executar com a**: **Jo** (User accessing) -> Això farà que el bot tingui els teus permisos de professor.
+    *   **Qui té accés**: **Qualsevol** (Anyone) -> Això permet que el teu bot extern cridi a l'API, però la seguretat la gestionem nosaltres amb la `API_KEY`.
+4.  Clica **Desplegar**.
+5.  Copia la **URL de l'aplicació web** (`https://script.google.com/.../exec`). Aquesta és la teva API endpoint.
 
 ---
 
-## ⚠️ Notes importants
+## 📖 Guia d'Ús Ràpida
 
-*   **Quotes**: L'API de Google té quotes d'ús diàries.
-*   **Permisos**: L'usuari que executa l'script ha de tenir els permisos adequats a Classroom (ser professor del curs, administrador del domini, etc.) per realitzar certes accions, especialment les relacionades amb Guardians o la creació de cursos nivell domini.
+Per a una referència completa de totes les accions, consulta **[API.md](API.md)** o utilitza el **[Tester Web](index.html)**.
+
+Totes les peticions han de ser `POST` a la URL del teu script amb un cos JSON:
+```json
+{
+  "key": "la_teva_clau",
+  "action": "nom_accio",
+  ...parametres
+}
+```
+
+### Funcions Destacades ✨
+
+#### 1. Crear Tasques amb Adjunts
+La "Joia de la Corona". Permet crear tasques amb fitxers i vídeos en una sola crida.
+**Important:** Els adjunts s'han de definir *al moment de crear*.
+
+```json
+{
+  "action": "create_courseWork",
+  "courseId": "12345",
+  "title": "Tasca Final",
+  "materials": [
+    { "link": { "url": "https://wikipedia.org", "title": "Info" } },
+    { "youtubeVideo": { "videoUrl": "...", "title": "Video" } }
+  ]
+}
+```
+
+#### 2. Matrícula Massiva
+Pots invitar alumnes mitjançant el seu correu electrònic.
+```json
+{ "action": "invite_student", "courseId": "12345", "email": "alumne@escola.cat" }
+```
+
+---
+
+## 🚫 Limitacions Tècniques (API Google)
+
+### ❌ 1. Modificar Adjunts en Tasques Existents
+L'API de Classroom permet modificar el títol, la descripció i l'estat d'una tasca existent (`patch`), però **NO permet afegir, treure o canviar els adjunts (materials)** un cop la tasca ha estat creada. Si ho intentes, rebràs un error `400: Non-supported update mask`.
+
+**Solució**: Assegura't de posar tots els adjunts correctament **en el moment de la creació**.
+
+### ❌ 2. Accions "Com a Alumne"
+Aquest bot s'executa amb els permisos del professor. No pot "entregar tasques" simulant ser un alumne.
+
+---
+
+## 🔮 Futures Millores
+
+*   **Cua de Peticions**: Sistema de retry automàtic per evitar errors de quota.
+*   **Gestió d'Errors HTTP**: Retornar codis d'error HTTP reals (400, 401, 500) en lloc de JSON `{error: ...}` amb estat 200.
+
+---
+
+**Desenvolupat amb ❤️ i molta paciència amb l'API de Google.**
