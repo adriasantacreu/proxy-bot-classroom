@@ -25,7 +25,7 @@
         }
 
         .json-number {
-            color: #text-yellow-300;
+            color: #fde047;
         }
 
         ::-webkit-scrollbar {
@@ -88,8 +88,13 @@
                     <div>
                         <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">API Key (Check Script
                             Properties!)</label>
-                        <input type="password" id="apiKey" value="pk_classroom_T9xR4mLw2vQ7nBs5jK8yF3hU6dP1aZ0c"
-                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:border-blue-500 focus:outline-none transition font-mono text-slate-300">
+                        <div class="relative">
+                            <input type="password" id="apiKey" value="pk_classroom_T9xR4mLw2vQ7nBs5jK8yF3hU6dP1aZ0c"
+                                autocomplete="off"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:border-blue-500 focus:outline-none transition font-mono text-slate-300 pr-10">
+                            <button onclick="toggleKey()"
+                                class="absolute right-3 top-2 text-slate-500 hover:text-slate-300">👁️</button>
+                        </div>
                     </div>
                     <button onclick="checkConnectionAndLoadCourses()"
                         class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-medium border border-slate-700 transition">
