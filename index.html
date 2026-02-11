@@ -171,6 +171,9 @@
 
     <script>
         let AVAILABLE_COURSES = [];
+        let CACHE_ASSIGNMENTS = {}; // courseId -> assignments[]
+        let CACHE_SUBMISSIONS = {}; // assignmentId -> submissions[]
+
         const formContainer = document.getElementById('dynamicForm');
         const output = document.getElementById('jsonOutput');
         const statusBadge = document.getElementById('statusBadge');
@@ -189,7 +192,7 @@
             list_topics: [{ id: 'courseId', label: 'Curs', type: 'courseSelect', req: true }],
             list_submissions: [
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
-                { id: 'courseWorkId', label: 'ID Tasca', type: 'text', placeholder: 'ID de la tasca per les notes', req: true }
+                { id: 'courseWorkId', label: 'Tasca (Auto-load)', type: 'assignmentSelect', req: true }
             ],
             create_courseWork: [
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
@@ -207,9 +210,18 @@
             ],
             grade_submission: [
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
-                { id: 'courseWorkId', label: 'ID Tasca', type: 'text', req: true },
-                { id: 'id', label: 'ID Entrega', type: 'text', placeholder: 'Submission ID', req: true },
+                { id: 'courseWorkId', label: 'Tasca', type: 'assignmentSelect', req: true },
+                { id: 'id', label: 'Entrega (Alumne)', type: 'submissionSelect', req: true },
                 { id: 'grade', label: 'Nota', type: 'number', placeholder: '9.5' }
+            ],
+            return_submission: [
+                { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
+                { id: 'courseWorkId', label: 'Tasca', type: 'assignmentSelect', req: true },
+                { id: 'id', label: 'Entrega (Alumne)', type: 'submissionSelect', req: true }
+            ],
+            create_topic: [
+                { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
+                { id: 'name', label: 'Nom del Tema', type: 'text', req: true }
             ]
         };
 
@@ -223,27 +235,69 @@
             i.type = i.type === 'password' ? 'text' : 'password';
         }
 
-        async function checkConnectionAndLoadCourses() {
+        async function fetchHelper(action, params = {}) {
             const url = document.getElementById('apiUrl').value;
             const key = document.getElementById('apiKey').value;
+            const query = new URLSearchParams({ action, key, ...params });
+            const response = await fetch(`${url}?${query.toString()}`, { method: 'GET', credentials: 'omit' });
+            return await response.json();
+        }
+
+        async function checkConnectionAndLoadCourses() {
             connectionStatus.innerHTML = '<span class="text-yellow-500 animate-pulse">🟡 Syncing...</span>';
             try {
-                const response = await fetch(`${url}?action=list_courses&key=${encodeURIComponent(key)}`, {
-                    method: 'GET',
-                    mode: 'cors',
-                    credentials: 'omit'
-                });
-                const json = await response.json();
+                const json = await fetchHelper('list_courses');
                 if (Array.isArray(json)) {
                     AVAILABLE_COURSES = json;
                     connectionStatus.innerHTML = `<span class="text-green-400">🟢 Connected • ${json.length} curs(os)</span>`;
                     logHistory('System', 'Courses loaded');
-                    // Reset selectable actions
                     document.getElementById('actionSelect').value = "";
                     formContainer.classList.add('hidden');
                 } else { throw new Error(json.error || "Bad Response"); }
             } catch (e) {
                 connectionStatus.innerHTML = `<span class="text-red-500">🔴 Error: ${e.message}</span>`;
+            }
+        }
+
+        async function updateAssignmentsDropdown(courseId, selectElement) {
+            selectElement.innerHTML = '<option disabled selected>Loading tasks...</option>';
+            try {
+                if (!CACHE_ASSIGNMENTS[courseId]) {
+                    const data = await fetchHelper('list_courseWork', { courseId });
+                    CACHE_ASSIGNMENTS[courseId] = Array.isArray(data) ? data : [];
+                }
+                const tasks = CACHE_ASSIGNMENTS[courseId];
+                selectElement.innerHTML = tasks.length ? '' : '<option disabled>No tasks found</option>';
+                tasks.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.innerText = t.title || t.id;
+                    selectElement.appendChild(opt);
+                });
+                selectElement.dispatchEvent(new Event('change'));
+            } catch (e) {
+                selectElement.innerHTML = '<option disabled>Error loading tasks</option>';
+            }
+        }
+
+        async function updateSubmissionsDropdown(courseId, courseWorkId, selectElement) {
+            selectElement.innerHTML = '<option disabled selected>Loading students...</option>';
+            try {
+                const cacheKey = `${courseId}_${courseWorkId}`;
+                if (!CACHE_SUBMISSIONS[cacheKey]) {
+                    const data = await fetchHelper('list_submissions', { courseId, courseWorkId });
+                    CACHE_SUBMISSIONS[cacheKey] = Array.isArray(data) ? data : [];
+                }
+                const subs = CACHE_SUBMISSIONS[cacheKey];
+                selectElement.innerHTML = subs.length ? '' : '<option disabled>No submissions</option>';
+                subs.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.innerText = `Sub: ${s.id.substring(0, 8)}... (User: ${s.userId.substring(0, 8)})`;
+                    selectElement.appendChild(opt);
+                });
+            } catch (e) {
+                selectElement.innerHTML = '<option disabled>Error loading</option>';
             }
         }
 
@@ -287,6 +341,23 @@
                         opt.innerText = `${c.name} (${c.section || 'No Sect'})`;
                         input.appendChild(opt);
                     });
+                    input.addEventListener('change', () => {
+                        const assSelect = formContainer.querySelector('select[id*="assignmentSelect"]');
+                        if (assSelect) updateAssignmentsDropdown(input.value, assSelect);
+                    });
+                } else if (field.type === 'assignmentSelect') {
+                    input = document.createElement('select');
+                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
+                    input.id = `input-${field.id}`;
+                    input.addEventListener('change', () => {
+                        const subSelect = formContainer.querySelector('select[id*="submissionSelect"]');
+                        const courseId = formContainer.querySelector('select[id*="courseId"]')?.value;
+                        if (subSelect && courseId) updateSubmissionsDropdown(courseId, input.value, subSelect);
+                    });
+                } else if (field.type === 'submissionSelect') {
+                    input = document.createElement('select');
+                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
+                    input.id = `input-${field.id}`;
                 } else if (field.type === 'textarea') {
                     input = document.createElement('textarea');
                     input.rows = 3;
@@ -297,11 +368,16 @@
                     input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
                 }
 
-                input.id = `input-${field.id}`;
+                if (!input.id) input.id = `input-${field.id}`;
                 input.placeholder = field.placeholder || '';
                 div.appendChild(label);
                 div.appendChild(input);
                 formContainer.appendChild(div);
+
+                // Initialize dropdowns if they are first in chain
+                if (field.type === 'courseSelect') {
+                    setTimeout(() => input.dispatchEvent(new Event('change')), 100);
+                }
             });
         });
 
