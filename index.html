@@ -436,6 +436,17 @@
                 const formatted = JSON.stringify(json, null, 4);
                 output.innerHTML = syntaxHighlight(formatted);
 
+                // Mostrar botó directe al Classroom si existeix alternateLink
+                const link = json.alternateLink || (json.course && json.course.alternateLink);
+                if (link) {
+                    const btnLink = document.createElement('a');
+                    btnLink.href = link;
+                    btnLink.target = "_blank";
+                    btnLink.className = "inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-xl mb-4 transition shadow-lg shadow-green-500/20";
+                    btnLink.innerHTML = "<span>🔗</span> Obrir al Classroom";
+                    output.prepend(btnLink);
+                }
+
                 // Afegir botó copiar
                 const btnCopy = document.createElement('button');
                 btnCopy.id = "btnCopy";
