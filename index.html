@@ -6,6 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🤖 Proxy Classroom Tester (Full API)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -45,7 +57,7 @@
             --json-null: #64748b;
         }
 
-        .dark:root {
+        .dark {
             --json-key: #a5b4fc;
             --json-string: #86efac;
             --json-number: #fde047;
@@ -73,7 +85,8 @@
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900 min-h-screen p-4 lg:p-8 transition-colors duration-300" id="body">
+<body class="bg-slate-50 text-slate-900 dark:text-slate-100 min-h-screen p-4 lg:p-8 transition-colors duration-300"
+    id="body">
 
     <div class="max-w-7xl mx-auto flex flex-col gap-6">
         <!-- HEADER / THEME SWITCHER -->
