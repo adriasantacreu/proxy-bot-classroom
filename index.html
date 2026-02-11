@@ -213,13 +213,12 @@
             logHistory('System', 'Pinging script...', false);
 
             try {
-                // Utilitzem text/plain per evitar preflight complex que sol fallar en GAS
-                const response = await fetch(url, {
-                    method: 'POST',
+                // Utilitzem GET per a la connexió inicial (més compatible amb GAS)
+                const testUrl = `${url}?action=list_courses&key=${encodeURIComponent(key)}`;
+                const response = await fetch(testUrl, {
+                    method: 'GET',
                     mode: 'cors',
-                    credentials: 'omit',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: 'list_courses', key: key })
+                    credentials: 'omit'
                 });
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -308,7 +307,8 @@
             statusBadge.classList.add('hidden');
 
             try {
-                const response = await fetch(url, {
+                const execUrl = `${url}?action=${action}&key=${encodeURIComponent(key)}`;
+                const response = await fetch(execUrl, {
                     method: 'POST',
                     credentials: 'omit',
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
