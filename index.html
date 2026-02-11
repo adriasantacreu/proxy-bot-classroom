@@ -616,11 +616,17 @@
                     btnAI.innerHTML = "<span>⏳</span> Pensant...";
 
                     try {
-                        const prompt = `Ets un assistent expert en Google Classroom. 
-                        Explica en català de forma molt senzilla i amable per a un professor què ha passat amb aquest resultat JSON.
-                        Si és una llista, resumeix quants elements hi ha. Si és un error, digues què ha fallat.
-                        NO usis codi, només text explicatiu.
-                        Resultat: ${JSON.stringify(json)}`;
+                        const actionLabel = document.getElementById('actionSelect').options[document.getElementById('actionSelect').selectedIndex].text;
+                        const fullUrl = document.getElementById('rawUrlContent').innerText;
+
+                        const prompt = `Ets un assistent expert en Google Classroom per a professors.
+                        L'usuari ha intentat fer aquesta acció: "${actionLabel}"
+                        Mitjançant aquesta URL de consulta: ${fullUrl}
+                        I el sistema ha respost el següent JSON: ${JSON.stringify(json)}
+                        
+                        Explica en un sol paràgraf breu i amable què ha passat exactament. 
+                        No usis codi ni tecnicismes. Si és un èxit, confirma què s'ha aconseguit. Si és un error, explica'l de forma humana.
+                        Respon directament amb l'explicació en català.`;
 
                         const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${aiKey}`, {
                             method: 'POST',
@@ -636,7 +642,7 @@
                             aiContainer.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 leading-relaxed shadow-sm";
                             btnAI.remove();
                         } else {
-                            throw new Error(aiJson.error?.message || "La IA no ha pogut generar una resposta.");
+                            throw new Error(aiJson.error?.message || "La IA no ha pogut interpretar les dades.");
                         }
                     } catch (e) {
                         aiContainer.classList.remove('animate-pulse');
