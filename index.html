@@ -305,6 +305,8 @@
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
                 { id: 'title', label: 'Títol', type: 'text', placeholder: 'Nova Tasca', req: true },
                 { id: 'description', label: 'Instruccions', type: 'text' },
+                { id: 'maxPoints', label: 'Punts Màxims', type: 'number', placeholder: '100' },
+                { id: 'topicId', label: 'ID del Tema (opcional)', type: 'text' },
                 { id: 'materials', label: 'Adjunts (JSON)', type: 'textarea', isJson: true }
             ],
             create_announcement: [
@@ -323,6 +325,7 @@
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
                 { id: 'title', label: 'Títol', type: 'text', placeholder: 'Material de lectura', req: true },
                 { id: 'description', label: 'Descripció', type: 'textarea' },
+                { id: 'topicId', label: 'ID del Tema (opcional)', type: 'text' },
                 { id: 'materials', label: 'Adjunts (JSON)', type: 'textarea', isJson: true }
             ],
             grade_submission: [

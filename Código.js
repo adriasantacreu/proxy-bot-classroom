@@ -21,6 +21,8 @@ function handleRequest(e) {
   const key = params.key;
   const action = params.action;
 
+  Logger.log(`Action: ${action}, Params: ${JSON.stringify(params)}`);
+
   // 1. Verificació de seguretat
   if (!API_KEY) {
     return ContentService.createTextOutput(JSON.stringify({ error: "API_KEY no configurada a les propietats de l'script" }))
@@ -63,6 +65,7 @@ function handleRequest(e) {
     "delete_announcement": deleteAnnouncement,
     "patch_announcement": patchAnnouncement,
     "patch_topic": patchTopic,
+    "delete_topic": deleteTopic,
     "delete_material": deleteMaterial,
     "patch_material": patchMaterial,
     "update_material": updateMaterial,
@@ -95,8 +98,7 @@ function handleRequest(e) {
     // Gestió de Fitxers i Organització
     "upload_to_classroom": uploadToClassroom,
     "upload_file": uploadFile,
-    "move_to_topic": moveToTopic,
-    "explain_json": explainWithAI // Encara que ho hem mogut al client, el deixem per retrocompatibilitat si calgués
+    "move_to_topic": moveToTopic
   };
 
   try {
@@ -274,9 +276,9 @@ function listMaterials(e) {
  * @throws {Error} Si falta 'courseId' o 'text'.
  */
 function createAnnouncement(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const text = data.text || e.parameter.text;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const text = params.text;
 
   if (!courseId || !text) throw new Error("Falta 'courseId' o 'text'");
 
@@ -296,17 +298,17 @@ function createAnnouncement(e) {
  * @throws {Error} Si falta 'courseId' o 'title'.
  */
 function createCourseWork(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const title = data.title || e.parameter.title;
-  const description = data.description || e.parameter.description;
-  const workType = data.workType || e.parameter.workType || "ASSIGNMENT";
-  const topicId = data.topicId || e.parameter.topicId;
-  const maxPoints = data.maxPoints || e.parameter.maxPoints;
-  const materials = data.materials; // array of {link:{url,title}} or {driveFile:{driveFile:{id,title}}}
-  const dueDate = data.dueDate; // {year, month, day}
-  const dueTime = data.dueTime; // {hours, minutes}
-  const state = data.state || "PUBLISHED";
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const title = params.title;
+  const description = params.description;
+  const workType = params.workType || "ASSIGNMENT";
+  const topicId = params.topicId;
+  const maxPoints = params.maxPoints;
+  const materials = params.materials;
+  const dueDate = params.dueDate;
+  const dueTime = params.dueTime;
+  const state = params.state || "PUBLISHED";
 
   if (!courseId || !title) throw new Error("Falta 'courseId' o 'title'");
 
@@ -317,29 +319,18 @@ function createCourseWork(e) {
     state: state
   };
 
-  if (topicId) {
-    courseWork.topicId = topicId;
-  }
-  if (maxPoints !== undefined && maxPoints !== null) {
-    courseWork.maxPoints = Number(maxPoints);
-  }
-  if (materials && Array.isArray(materials)) {
-    courseWork.materials = materials;
-  }
-  if (dueDate) {
-    courseWork.dueDate = dueDate;
-  }
-  if (dueTime) {
-    courseWork.dueTime = dueTime;
-  }
-  // Opcions per a MULTIPLE_CHOICE_QUESTION
-  const choices = data.choices;
+  if (topicId) courseWork.topicId = topicId;
+  if (maxPoints !== undefined && maxPoints !== null) courseWork.maxPoints = Number(maxPoints);
+  if (materials && Array.isArray(materials)) courseWork.materials = materials;
+  if (dueDate) courseWork.dueDate = dueDate;
+  if (dueTime) courseWork.dueTime = dueTime;
+
+  const choices = params.choices;
   if (choices && Array.isArray(choices) && workType === "MULTIPLE_CHOICE_QUESTION") {
     courseWork.multipleChoiceQuestion = { choices: choices };
   }
-  // Flag per associar amb el developer (API)
-  if (data.associatedWithDeveloper !== undefined) {
-    courseWork.associatedWithDeveloper = data.associatedWithDeveloper;
+  if (params.associatedWithDeveloper !== undefined) {
+    courseWork.associatedWithDeveloper = params.associatedWithDeveloper;
   }
 
   return Classroom.Courses.CourseWork.create(courseWork, courseId);
@@ -355,9 +346,9 @@ function createCourseWork(e) {
  * @throws {Error} Si falta 'courseId' o 'name'.
  */
 function createTopic(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const name = data.name || e.parameter.name;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const name = params.name;
   if (!courseId || !name) throw new Error("Falta 'courseId' o 'name'");
   return Classroom.Courses.Topics.create({ name: name }, courseId);
 }
@@ -373,13 +364,13 @@ function createTopic(e) {
  * @throws {Error} Si falta 'courseId' o 'title'.
  */
 function createMaterial(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const title = data.title || e.parameter.title;
-  const description = data.description || e.parameter.description;
-  const topicId = data.topicId || e.parameter.topicId;
-  const materials = data.materials;
-  const state = data.state || "PUBLISHED"; // Permetre DRAFT
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const title = params.title;
+  const description = params.description;
+  const topicId = params.topicId;
+  const materials = params.materials;
+  const state = params.state || "PUBLISHED";
 
   if (!courseId || !title) throw new Error("Falta 'courseId' o 'title'");
 
@@ -389,13 +380,8 @@ function createMaterial(e) {
     state: state
   };
 
-  if (topicId) {
-    material.topicId = topicId;
-  }
-
-  if (materials && Array.isArray(materials)) {
-    material.materials = materials;
-  }
+  if (topicId) material.topicId = topicId;
+  if (materials && Array.isArray(materials)) material.materials = materials;
 
   return Classroom.Courses.CourseWorkMaterials.create(material, courseId);
 }
@@ -435,8 +421,9 @@ function patchCourseWork(e) {
  * @throws {Error} Si falta 'courseId' o 'id'.
  */
 function deleteCourseWork(e) {
-  const courseId = e.parameter.courseId;
-  const id = e.parameter.id;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.CourseWork.remove(courseId, id);
 }
@@ -450,8 +437,9 @@ function deleteCourseWork(e) {
  * @throws {Error} Si falta 'courseId' o 'id'.
  */
 function deleteAnnouncement(e) {
-  const courseId = e.parameter.courseId;
-  const id = e.parameter.id;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.Announcements.remove(courseId, id);
 }
@@ -465,8 +453,9 @@ function deleteAnnouncement(e) {
  * @throws {Error} Si falta 'courseId' o 'id'.
  */
 function deleteMaterial(e) {
-  const courseId = e.parameter.courseId;
-  const id = e.parameter.id;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.CourseWorkMaterials.remove(courseId, id);
 }
@@ -482,11 +471,11 @@ function deleteMaterial(e) {
  * @throws {Error} Si falta 'courseId' o 'id'.
  */
 function patchMaterial(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || e.parameter.updateMask || "title,description,state";
-  const material = data.material || {};
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
+  const updateMask = params.updateMask || "title,description,state";
+  const material = params.material || {};
 
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.CourseWorkMaterials.patch(material, courseId, id, { updateMask: updateMask });
@@ -503,11 +492,11 @@ function patchMaterial(e) {
  * @throws {Error} Si falta 'courseId' o 'id'.
  */
 function patchAnnouncement(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || "text,state";
-  const announcement = data.announcement || {};
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
+  const updateMask = params.updateMask || "text,state";
+  const announcement = params.announcement || {};
 
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.Announcements.patch(announcement, courseId, id, { updateMask: updateMask });
@@ -524,14 +513,25 @@ function patchAnnouncement(e) {
  * @throws {Error} Si falta 'courseId' o 'id'.
  */
 function patchTopic(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || "name";
-  const topic = data.topic || {};
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
+  const updateMask = params.updateMask || "name";
+  const topic = params.topic || {};
 
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
   return Classroom.Courses.Topics.patch(topic, courseId, id, { updateMask: updateMask });
+}
+
+/**
+ * Elimina un tema (topic) d'un curs.
+ */
+function deleteTopic(e) {
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
+  if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
+  return Classroom.Courses.Topics.remove(courseId, id);
 }
 
 
@@ -555,22 +555,33 @@ function gradeSubmission(e) {
   const courseId = params.courseId;
   const courseWorkId = params.courseWorkId;
   const id = params.id;
+  const grade = params.grade;
 
   if (!courseId || !courseWorkId || !id) {
-    throw new Error("Falten IDs obligatoris: courseId, courseWorkId o submissionId (id)");
+    throw new Error(`Falten paràmetres: courseId=${courseId}, courseWorkId=${courseWorkId}, id=${id}`);
   }
 
-  const grade = params.grade;
   const submission = {
-    draftGrade: grade !== undefined ? Number(grade) : undefined,
-    assignedGrade: grade !== undefined ? Number(grade) : undefined
+    draftGrade: Number(grade),
+    assignedGrade: Number(grade)
   };
 
-  const updateMask = params.updateMask || "draftGrade,assignedGrade";
-
-  return Classroom.Courses.CourseWork.StudentSubmissions.patch(submission, courseId, courseWorkId, id, {
-    updateMask: updateMask
-  });
+  try {
+    const result = Classroom.Courses.CourseWork.StudentSubmissions.patch(submission, courseId, courseWorkId, id, {
+      updateMask: "draftGrade,assignedGrade"
+    });
+    return {
+      success: true,
+      sent: submission,
+      received: result
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err.toString(),
+      sent: submission
+    };
+  }
 }
 
 /**
@@ -583,9 +594,10 @@ function gradeSubmission(e) {
  * @throws {Error} Si falten 'courseId', 'courseWorkId' o 'id'.
  */
 function returnSubmission(e) {
-  const courseId = e.parameter.courseId;
-  const courseWorkId = e.parameter.courseWorkId;
-  const id = e.parameter.id;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const courseWorkId = params.courseWorkId;
+  const id = params.id;
   if (!courseId || !courseWorkId || !id) throw new Error("Falten ids");
   return Classroom.Courses.CourseWork.StudentSubmissions['return']({}, courseId, courseWorkId, id);
 }
@@ -603,7 +615,8 @@ function returnSubmission(e) {
  * @throws {Error} Si falta 'userId'.
  */
 function getUserProfile(e) {
-  const userId = e.parameter.userId;
+  const params = getParams(e);
+  const userId = params.userId;
   if (!userId) throw new Error("Falta 'userId'");
   return Classroom.UserProfiles.get(userId);
 }
@@ -690,10 +703,10 @@ function deleteTeacher(e) {
  * @throws {Error} Si falta 'name'.
  */
 function createCourse(e) {
-  const data = getPayload(e);
-  const name = data.name || e.parameter.name;
-  const section = data.section || e.parameter.section;
-  const ownerId = data.ownerId || e.parameter.ownerId || "me";
+  const params = getParams(e);
+  const name = params.name;
+  const section = params.section;
+  const ownerId = params.ownerId || "me";
 
   if (!name) throw new Error("Falta 'name'");
   const course = { name: name, section: section, ownerId: ownerId, courseState: "ACTIVE" };
@@ -710,10 +723,10 @@ function createCourse(e) {
  * @throws {Error} Si falta 'id'.
  */
 function updateCourse(e) {
-  const data = getPayload(e);
-  const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || e.parameter.updateMask || "name";
-  const course = data.course || {};
+  const params = getParams(e);
+  const id = params.id;
+  const updateMask = params.updateMask || "name";
+  const course = params.course || {};
 
   if (!id) throw new Error("Falta 'id' del curs");
   return Classroom.Courses.patch(course, id, { updateMask: updateMask });
@@ -727,7 +740,8 @@ function updateCourse(e) {
  * @throws {Error} Si falta 'id'.
  */
 function deleteCourse(e) {
-  const id = e.parameter.id;
+  const params = getParams(e);
+  const id = params.id;
   if (!id) throw new Error("Falta 'id'");
   return Classroom.Courses.remove(id);
 }
@@ -746,8 +760,9 @@ function deleteCourse(e) {
  * @throws {Error} Si falten 'courseId' o 'courseWorkId'.
  */
 function listRubrics(e) {
-  const courseId = e.parameter.courseId;
-  const courseWorkId = e.parameter.courseWorkId;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const courseWorkId = params.courseWorkId;
   if (!courseId || !courseWorkId) throw new Error("Falta 'courseId' o 'courseWorkId'");
   return Classroom.Courses.CourseWork.Rubrics.list(courseId, courseWorkId).rubrics || [];
 }
@@ -762,10 +777,10 @@ function listRubrics(e) {
  * @throws {Error} Si falten 'courseId' o 'courseWorkId'.
  */
 function createRubric(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const courseWorkId = data.courseWorkId || e.parameter.courseWorkId;
-  const criteria = data.criteria || [];
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const courseWorkId = params.courseWorkId;
+  const criteria = params.criteria || [];
 
   if (!courseId || !courseWorkId) throw new Error("Falta 'courseId' o 'courseWorkId'");
   return Classroom.Courses.CourseWork.Rubrics.create({ criteria: criteria }, courseId, courseWorkId);
@@ -781,9 +796,10 @@ function createRubric(e) {
  * @throws {Error} Si falten 'courseId', 'courseWorkId' o 'id'.
  */
 function deleteRubric(e) {
-  const courseId = e.parameter.courseId;
-  const courseWorkId = e.parameter.courseWorkId;
-  const id = e.parameter.id;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const courseWorkId = params.courseWorkId;
+  const id = params.id;
   if (!courseId || !courseWorkId || !id) throw new Error("Falta 'courseId', 'courseWorkId' o 'id'");
   return Classroom.Courses.CourseWork.Rubrics.remove(courseId, courseWorkId, id);
 }
@@ -800,12 +816,12 @@ function deleteRubric(e) {
  * @throws {Error} Si falten 'courseId', 'courseWorkId' o 'id'.
  */
 function patchRubric(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const courseWorkId = data.courseWorkId || e.parameter.courseWorkId;
-  const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || "criteria";
-  const rubric = data.rubric || {};
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const courseWorkId = params.courseWorkId;
+  const id = params.id;
+  const updateMask = params.updateMask || "criteria";
+  const rubric = params.rubric || {};
 
   if (!courseId || !courseWorkId || !id) throw new Error("Falta 'courseId', 'courseWorkId' o 'id'");
   return Classroom.Courses.CourseWork.Rubrics.patch(rubric, courseId, courseWorkId, id, { updateMask: updateMask });
@@ -819,7 +835,8 @@ function patchRubric(e) {
  * @throws {Error} Si falta 'studentId'.
  */
 function listGuardians(e) {
-  const studentId = e.parameter.studentId;
+  const params = getParams(e);
+  const studentId = params.studentId;
   if (!studentId) throw new Error("Falta 'studentId'");
   return Classroom.UserProfiles.Guardians.list(studentId).guardians || [];
 }
@@ -833,8 +850,9 @@ function listGuardians(e) {
  * @throws {Error} Si falta 'studentId' o 'email'.
  */
 function inviteGuardian(e) {
-  const studentId = e.parameter.studentId;
-  const email = e.parameter.email;
+  const params = getParams(e);
+  const studentId = params.studentId;
+  const email = params.email;
   if (!studentId || !email) throw new Error("Falta 'studentId' o 'email'");
   return Classroom.UserProfiles.GuardianInvitations.create({ invitedEmailAddress: email }, studentId);
 }
@@ -848,8 +866,9 @@ function inviteGuardian(e) {
  * @throws {Error} Si falten 'studentId' o 'guardianId'.
  */
 function deleteGuardian(e) {
-  const studentId = e.parameter.studentId;
-  const guardianId = e.parameter.guardianId;
+  const params = getParams(e);
+  const studentId = params.studentId;
+  const guardianId = params.guardianId;
   if (!studentId || !guardianId) throw new Error("Falta 'studentId' o 'guardianId'");
   return Classroom.UserProfiles.Guardians.remove(studentId, guardianId);
 }
@@ -870,23 +889,21 @@ function deleteGuardian(e) {
  * @param {string} [mimeType] - Tipus MIME (opcional, per defecte PDF).
  */
 function uploadToClassroom(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const title = data.title || e.parameter.title;
-  const base64Data = data.base64Data;
-  const fileName = data.fileName;
-  const mimeType = data.mimeType || MimeType.PDF;
-  const topicId = data.topicId || e.parameter.topicId;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const title = params.title;
+  const base64Data = params.base64Data;
+  const fileName = params.fileName;
+  const mimeType = params.mimeType || MimeType.PDF;
+  const topicId = params.topicId;
 
   if (!courseId || !title || !base64Data || !fileName) {
     throw new Error("Falten paràmetres: courseId, title, base64Data, fileName");
   }
 
-  // 1. Decodificar i crear fitxer a Drive
   const decodedBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
   const driveFile = DriveApp.createFile(decodedBlob);
 
-  // 2. Crear el material a Classroom vinculant el fitxer
   const material = {
     title: title,
     state: "PUBLISHED",
@@ -902,10 +919,7 @@ function uploadToClassroom(e) {
     ]
   };
 
-  if (topicId) {
-    material.topicId = topicId;
-  }
-
+  if (topicId) material.topicId = topicId;
   return Classroom.Courses.CourseWorkMaterials.create(material, courseId);
 }
 
@@ -919,17 +933,17 @@ function uploadToClassroom(e) {
  * @returns {object} Informació del fitxer: id, name, url.
  */
 function uploadFile(e) {
-  var data = getPayload(e);
-  var base64Data = data.base64Data;
-  var fileName = data.fileName;
-  var mimeType = data.mimeType || "application/pdf";
+  const params = getParams(e);
+  const base64Data = params.base64Data;
+  const fileName = params.fileName;
+  const mimeType = params.mimeType || "application/pdf";
 
   if (!base64Data || !fileName) {
     throw new Error("Falta 'base64Data' o 'fileName'");
   }
 
-  var decodedBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
-  var driveFile = DriveApp.createFile(decodedBlob);
+  const decodedBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
+  const driveFile = DriveApp.createFile(decodedBlob);
 
   return {
     id: driveFile.getId(),
@@ -946,15 +960,15 @@ function uploadFile(e) {
  * @param {string} topicId - ID del tema destí.
  */
 function moveToTopic(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const courseWorkId = data.courseWorkId || data.id || e.parameter.courseWorkId || e.parameter.id;
-  const topicId = data.topicId || e.parameter.topicId;
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const courseWorkId = params.courseWorkId || params.id;
+  const topicId = params.topicId;
 
   if (!courseId || !courseWorkId) throw new Error("Falta courseId o courseWorkId");
 
   const updateMask = "topicId";
-  const content = { topicId: topicId || "" }; // Si no hi ha topicId, el buidem (moure a capçalera)
+  const content = { topicId: topicId || "" };
 
   return Classroom.Courses.CourseWork.patch(content, courseId, courseWorkId, { updateMask: updateMask });
 }
@@ -966,14 +980,13 @@ function moveToTopic(e) {
  * Útil per afegir/treure materials via update (PUT).
  */
 function updateCourseWork(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const id = data.id || e.parameter.id;
-  const courseWork = data.courseWork || {};
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
+  const courseWork = params.courseWork || {};
 
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
 
-  // Use PATCH with explicit updateMask
   const updateMask = "title,description,state,materials,maxPoints,workType,topicId,dueDate,dueTime,submissionModificationMode,assigneeMode";
   const url = `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${id}?updateMask=${updateMask}`;
   const options = {
@@ -998,14 +1011,13 @@ function updateCourseWork(e) {
  * Això permet modificar adjunts quan la llibreria GAS falla.
  */
 function updateMaterial(e) {
-  const data = getPayload(e);
-  const courseId = data.courseId || e.parameter.courseId;
-  const id = data.id || e.parameter.id;
-  const material = data.material || {};
+  const params = getParams(e);
+  const courseId = params.courseId;
+  const id = params.id;
+  const material = params.material || {};
 
   if (!courseId || !id) throw new Error("Falta 'courseId' o 'id'");
 
-  // Use PATCH with explicit updateMask
   const updateMask = "title,description,state,materials,topicId";
   const url = `https://classroom.googleapis.com/v1/courses/${courseId}/courseWorkMaterials/${id}?updateMask=${updateMask}`;
   const options = {

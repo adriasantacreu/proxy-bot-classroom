@@ -59,7 +59,13 @@ Llista les entregues dels alumnes per a una tasca concreta (inclou notes).
     *   `courseWorkId` (Obligatori): ID de la tasca.
 *   **Exemple URL**: `.../exec?action=list_submissions&key=abc&courseId=123&courseWorkId=456`
 
-### 7. `get_user_profile`
+### 7. `list_topics`
+Llista els temes (mòduls) creats al curs.
+
+*   **Paràmetres**:
+    *   `courseId` (Obligatori): ID del curs.
+
+### 8. `get_user_profile`
 Obté informació pública d'un usuari (nom, foto, email) a partir del seu ID o email.
 
 *   **Paràmetres**:
@@ -126,7 +132,20 @@ Crea un recurs de material (apunts, lectures) sense qualificació.
     }
     ```
 
-### 4. `create_announcement`
+### 4. `create_topic`
+Crea un nou tema (mòdul) al curs.
+
+*   **Cos de la Petició (JSON)**:
+    ```json
+    {
+      "key": "abc",
+      "action": "create_topic",
+      "courseId": "123456",
+      "name": "Tema 1: Fonaments"
+    }
+    ```
+
+### 5. `create_announcement`
 Publica un anunci al tauler de novetats (Stream).
 
 *   **Cos de la Petició (JSON)**:
@@ -139,7 +158,7 @@ Publica un anunci al tauler de novetats (Stream).
     }
     ```
 
-### 5. `invite_student` / `invite_teacher`
+### 6. `invite_student` / `invite_teacher`
 Envia una invitació per correu electrònic per unir-se al curs.
 
 *   **Cos de la Petició (JSON)**:
@@ -155,11 +174,10 @@ Envia una invitació per correu electrònic per unir-se al curs.
 ---
 
 ## 🟠 Accions de Modificació (POST) - Patch
-Permeten editar elements existents.
-**⚠️ LIMITACIÓ**: No es poden modificar, afegir ni eliminar adjunts (`materials`) en aquesta versió de l'API.
+Permeten editar elements existents de forma parcial.
 
-### 1. `patch_courseWork`
-Modifica títol, descripció, estat, punts o tema d'una tasca.
+### 1. `patch_courseWork` / `patch_material` / `patch_announcement`
+Modifica camps específics (títol, text, estat).
 
 *   **Cos de la Petició (JSON)**:
     ```json
@@ -167,17 +185,14 @@ Modifica títol, descripció, estat, punts o tema d'una tasca.
       "key": "abc",
       "action": "patch_courseWork",
       "courseId": "123456",
-      "id": "789012",              // ID de la tasca
-      "updateMask": "title,state", // Camps a actualitzar (separats per comes)
-      "courseWork": {              // Objecte amb els nous valors
-        "title": "Nou Títol Corregit",
-        "state": "DRAFT"
-      }
+      "id": "789012",              
+      "updateMask": "title",       // Camps a tocar separats per coma
+      "courseWork": { "title": "Nou Títol" } // L'objecte amb el canvi
     }
     ```
 
-### 2. `grade_submission`
-Posa nota a una entrega d'alumne.
+### 2. `grade_submission` (Simplificat) 🚀
+Posa nota a una entrega d'alumne de forma directa.
 
 *   **Cos de la Petició (JSON)**:
     ```json
@@ -186,11 +201,8 @@ Posa nota a una entrega d'alumne.
       "action": "grade_submission",
       "courseId": "123",
       "courseWorkId": "456",
-      "id": "789",                 // ID de l'entrega (Submission ID)
-      "submission": {
-        "assignedGrade": 95,
-        "draftGrade": 95
-      }
+      "id": "789",                 // ID de l'entrega
+      "grade": 85                  // Nota numèrica
     }
     ```
 
@@ -212,14 +224,14 @@ Retorna la tasca a l'alumne (finalitza la correcció).
 
 ## 🔴 Accions d'Eliminació (POST)
 
-### 1. `delete_courseWork` / `delete_material` / `delete_announcement`
-Esborra permanentment un element. Irreversible.
+### 1. `delete_courseWork` / `delete_material` / `delete_announcement` / `delete_topic`
+Esborra permanentment un element.
 
 *   **Cos de la Petició (JSON)**:
     ```json
     {
       "key": "abc",
-      "action": "delete_courseWork",
+      "action": "delete_topic",
       "courseId": "123456",
       "id": "789012"
     }
@@ -237,3 +249,18 @@ Expulsa un membre del curs.
       "userId": "alumne@domini.cat" // O ID numèric
     }
     ```
+
+---
+
+## ⚠️ Permisos i Limitacions
+
+Saps que una acció ha fallat per "Permisos" (i no pel codi) quan reps un error `403 Forbidden` o similar. Casos típics:
+
+1.  **`create_course`**: Només funciona si el teu compte de Google té permís per crear cursos dins del teu domini (G Suite / Workspace). Els comptes d'estudiant solen tenir-ho prohibit.
+2.  **`invite_teacher`**: Google Classroom sol prohibir convidar professors de dominis externs (ex: convidar un `@gmail.com` des d'un compte `@escola.cat`) a menys que l'administrador ho permeti explícitament.
+3.  **`delete_course`**: Només el propietari original del curs pot esborrar-lo. **Nota**: Per poder esborrar un curs completament, primer ha d'estar en estat `ARCHIVED`.
+4.  **`list_guardians` / `invite_guardian`**: Requereixen un domini de Google Workspace for Education i que l'administrador hagi activat la funcionalitat de tutors.
+5.  **`update_material` (Adjunts)**: Els fitxers adjunts només es poden modificar si el fitxer ja està a Drive i el bot té permisos d'edició sobre ell.
+
+---
+*Documentació actualitzada a la Versió 55 del Proxy.* 🛠️

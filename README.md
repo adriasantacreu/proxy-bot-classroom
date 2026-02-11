@@ -39,11 +39,14 @@ Aquest projecte neix de la necessitat d'interactuar amb Google Classroom des d'e
 3.  Executar com a: **Jo** (Me).
 4.  Qui té accés: **Qualsevol** (**Anyone**). *Aquest pas és vital per al Tester Web.*
 
+### 🛠️ Gestió Pro (Amb Clasp)
+Si ets un usuari avançat i vols fer deploy des de la terminal sense morir en l'intent, consulta la **[Guia de Gestió de Desplegaments (DEPLOY_GUIDE.md)](DEPLOY_GUIDE.md)**. 
+
 ---
 
 ## 📖 Guia d'Ús Ràpida
 
-Consulta **[API.md](API.md)** per veure tots els paràmetres. El format base és:
+Consulta **[API.md](API.md)** per veure tots els paràmetres i la secció de **Permisos** per entendre per què algunes accions (com crear cursos) poden fallar segons el teu compte. El format base és:
 ```json
 {
   "key": "la_teva_clau",
