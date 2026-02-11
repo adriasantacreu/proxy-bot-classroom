@@ -185,11 +185,16 @@
                                     <option value="create_announcement">Publicar Anunci</option>
                                     <option value="create_material">Enviar Material</option>
                                     <option value="invite_student">Invitar Alumne (Email)</option>
+                                    <option value="invite_teacher">Invitar Professor (Email)</option>
                                     <option value="create_topic">Crear Tema</option>
                                 </optgroup>
                                 <optgroup label="✅ AVALUACIÓ (POST)">
                                     <option value="grade_submission">Qualificar Entrega</option>
                                     <option value="return_submission">Retornar Tasca</option>
+                                </optgroup>
+                                <optgroup label="⚙️ ADMINISTRACIÓ (DANGEROUS)">
+                                    <option value="create_course">Crear Curs</option>
+                                    <option value="delete_courseWork">Eliminar Tasca</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -285,6 +290,16 @@
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
                 { id: 'email', label: 'Email alumne', type: 'email', req: true }
             ],
+            invite_teacher: [
+                { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
+                { id: 'email', label: 'Email professor', type: 'email', req: true }
+            ],
+            create_material: [
+                { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
+                { id: 'title', label: 'Títol', type: 'text', placeholder: 'Material de lectura', req: true },
+                { id: 'description', label: 'Descripció', type: 'textarea' },
+                { id: 'materials', label: 'Adjunts (JSON)', type: 'textarea', isJson: true }
+            ],
             grade_submission: [
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
                 { id: 'courseWorkId', label: 'Tasca', type: 'assignmentSelect', req: true },
@@ -299,6 +314,15 @@
             create_topic: [
                 { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
                 { id: 'name', label: 'Nom del Tema', type: 'text', req: true }
+            ],
+            create_course: [
+                { id: 'name', label: 'Nom del Curs', type: 'text', req: true },
+                { id: 'section', label: 'Secció', type: 'text' },
+                { id: 'descriptionHeading', label: 'Capçalera', type: 'text' }
+            ],
+            delete_courseWork: [
+                { id: 'courseId', label: 'Curs', type: 'courseSelect', req: true },
+                { id: 'id', label: 'Tasca', type: 'assignmentSelect', req: true }
             ]
         };
 
