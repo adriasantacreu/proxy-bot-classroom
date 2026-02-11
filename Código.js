@@ -18,7 +18,17 @@ function doPost(e) {
  */
 function handleRequest(e) {
   const API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY");
-  const key = e.parameter.key;
+
+  // Detectar dades si vénen al body (POST) o a la URL (GET)
+  let data = {};
+  try {
+    if (e.postData && e.postData.contents) {
+      data = JSON.parse(e.postData.contents);
+    }
+  } catch (err) { /* no és JSON */ }
+
+  const key = e.parameter.key || data.key;
+  const action = e.parameter.action || data.action;
 
   // 1. Verificació de seguretat
   if (!API_KEY) {
@@ -31,14 +41,12 @@ function handleRequest(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  const action = e.parameter.action;
   if (!action) {
     return ContentService.createTextOutput(JSON.stringify({ error: "Falta el paràmetre 'action'" }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
   // 2. Map d'accions (Dispatcher)
-  // Això enllaça el nom de l'acció amb la seva funció
   const actions = {
     // Lectura bàsica
     "list_courses": listCourses,
