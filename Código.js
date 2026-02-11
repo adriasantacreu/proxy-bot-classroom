@@ -133,7 +133,7 @@ function explainWithAI(e) {
   const jsonToExplain = data.json_content;
   if (!jsonToExplain) throw new Error("Falta 'json_content' per explicar");
 
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemma-2-27b-it:generateContent?key=${GOOGLE_AI_KEY}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${GOOGLE_AI_KEY}`;
 
   const prompt = `Actua com un assistent expert en Google Classroom per a professors no tècnics. 
   Explica en català de forma senzilla i amable què significa el següent resultat JSON d'una operació de l'API. 

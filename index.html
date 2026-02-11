@@ -170,9 +170,9 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
                         <!-- Selector -->
-                        <div class="md:col-span-12">
+                        <div class="md:col-span-12 flex gap-2">
                             <select id="actionSelect"
-                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:border-blue-500 focus:outline-none">
+                                class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:border-blue-500 focus:outline-none">
                                 <option value="" disabled selected>-- Tria una acció --</option>
                                 <optgroup label="📊 LECTURA (GET)">
                                     <option value="list_courses">Llistar Cursos</option>
@@ -185,22 +185,26 @@
                                     <option value="list_topics">Llistar Temes</option>
                                 </optgroup>
                                 <optgroup label="✏️ CREACIÓ (POST)">
-                                    <option value="create_courseWork">Crear Tasca (+Adjunts)</option>
-                                    <option value="create_announcement">Publicar Anunci</option>
-                                    <option value="create_material">Enviar Material</option>
-                                    <option value="invite_student">Invitar Alumne (Email)</option>
-                                    <option value="invite_teacher">Invitar Professor (Email)</option>
-                                    <option value="create_topic">Crear Tema</option>
+                                    <option value="create_courseWork">Crear Tasca (+Adjunts) *</option>
+                                    <option value="create_announcement">Publicar Anunci *</option>
+                                    <option value="create_material">Enviar Material *</option>
+                                    <option value="invite_student">Invitar Alumne (Email) *</option>
+                                    <option value="invite_teacher">Invitar Professor (Email) *</option>
+                                    <option value="create_topic">Crear Tema *</option>
                                 </optgroup>
                                 <optgroup label="✅ AVALUACIÓ (POST)">
-                                    <option value="grade_submission">Qualificar Entrega</option>
-                                    <option value="return_submission">Retornar Tasca</option>
+                                    <option value="grade_submission">Qualificar Entrega *</option>
+                                    <option value="return_submission">Retornar Tasca *</option>
                                 </optgroup>
                                 <optgroup label="⚙️ ADMINISTRACIÓ (DANGEROUS)">
-                                    <option value="create_course">Crear Curs</option>
-                                    <option value="delete_courseWork">Eliminar Tasca</option>
+                                    <option value="create_course">Crear Curs *</option>
+                                    <option value="delete_courseWork">Eliminar Tasca *</option>
                                 </optgroup>
                             </select>
+                            <button onclick="fillRandomData()" title="Magic Fill (Random Data)"
+                                class="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 p-3 rounded-xl hover:bg-amber-200 transition">
+                                🪄
+                            </button>
                         </div>
 
                         <!-- Params Form -->
@@ -646,6 +650,31 @@
                 return `<span class="${cls}">${match}</span>`;
             });
         }
+
+        // MAGIC FILL: Dades random per fer proves ràpides
+        function fillRandomData() {
+            const inputs = formContainer.querySelectorAll('input, textarea');
+            const randomID = () => Math.floor(Math.random() * 10000);
+            const titles = ["Increïble Projecte", "Estudi de Cas 1", "Anàlisi Crític", "Misteri Científic", "Repas General"];
+            const words = ["Lorem", "Ipsum", "Dolor", "Sit", "Amet", "Consectetur"];
+
+            inputs.forEach(input => {
+                const id = input.id.replace('input-', '');
+                if (id === 'title') input.value = titles[Math.floor(Math.random() * titles.length)] + " " + randomID();
+                if (id === 'description' || id === 'text' || id === 'name') input.value = words[Math.floor(Math.random() * words.length)] + " " + words[Math.floor(Math.random() * words.length)] + "...";
+                if (id === 'email') input.value = `test_${randomID()}@ieticloud.cat`;
+                if (id === 'grade') input.value = (Math.random() * 10).toFixed(1);
+                if (id === 'materials') input.value = EXAMPLE_MATERIALS;
+                if (id === 'section') input.value = "Grup " + String.fromCharCode(65 + Math.floor(Math.random() * 4));
+            });
+        }
+
+        // LISTEN ENTER: Per executar l'acció ràpidament
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+                executeAction();
+            }
+        });
     </script>
 </body>
 
