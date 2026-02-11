@@ -592,23 +592,38 @@
                 btnAI.className = "absolute top-12 right-32 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-3 py-1 rounded transition flex items-center gap-1";
                 btnAI.innerHTML = "<span>✨</span> Explica amb IA";
                 btnAI.onclick = async () => {
+                    const aiContainer = document.createElement('div');
+                    aiContainer.id = "aiLoadingMsg";
+                    aiContainer.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 animate-pulse";
+                    aiContainer.innerHTML = "<span>🧠</span> Gemma-3 s'està mirant les dades i pensant una explicació...";
+                    output.prepend(aiContainer);
+
                     btnAI.disabled = true;
+                    btnAI.classList.add('opacity-50', 'cursor-not-allowed');
                     btnAI.innerHTML = "<span>⏳</span> Pensant...";
+
                     try {
                         const aiRes = await fetch(`${url}?action=explain_json&key=${key}`, {
                             method: 'POST',
                             body: JSON.stringify({ action: 'explain_json', key, json_content: json })
                         });
                         const aiJson = await aiRes.json();
+                        aiContainer.classList.remove('animate-pulse');
+
                         if (aiJson.explanation) {
-                            const aiDiv = document.createElement('div');
-                            aiDiv.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 leading-relaxed shadow-sm animate-in fade-in slide-in-from-top-2 duration-500";
-                            aiDiv.innerHTML = `<b>✨ Explicació IA:</b><br>${aiJson.explanation.replace(/\n/g, '<br>')}`;
-                            output.prepend(aiDiv);
-                            btnAI.remove(); // Un cop explicat, el traiem
+                            aiContainer.innerHTML = `<b>✨ Explicació IA:</b><br>${aiJson.explanation.replace(/\n/g, '<br>')}`;
+                            aiContainer.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 leading-relaxed shadow-sm";
+                            btnAI.remove();
+                        } else {
+                            throw new Error(aiJson.error || "La IA no ha pogut generar una resposta.");
                         }
                     } catch (e) {
-                        btnAI.innerHTML = "❌ AI Error";
+                        aiContainer.classList.remove('animate-pulse');
+                        aiContainer.className = "mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-[11px] text-red-700 dark:text-red-300";
+                        aiContainer.innerHTML = `<b>❌ Error de la IA:</b><br>${e.message}`;
+                        btnAI.disabled = false;
+                        btnAI.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btnAI.innerHTML = "<span>✨</span> Reintentar IA";
                     }
                 };
                 output.parentElement.appendChild(btnAI);
