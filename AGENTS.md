@@ -1,23 +1,26 @@
-# 🤖 Context i Arquitectura del Projecte (AGENTS.md)
+# 🤖 Agent Specialized Technical Guide (AGENTS.md)
 
-## 📝 Origen i Context
-Aquest projecte ha estat generat mitjançant **Vibecoding**. Neix de la necessitat de crear una infraestructura robusta per configurar bots autònoms o semiautònoms que interactuïn amb Google Classroom.
+Aquest fitxer conté instruccions tècniques crítiques per a futurs agents d'IA. Ignora la narrativa i centra't en la implementació.
 
-### Evolució Tècnica
-1.  **Intent inicial (MCP)**: El projecte va començar amb l'intent de crear un Model Context Protocol (MCP). Tot i que era una idea atractiva, la gestió de permisos i l'arquitectura de seguretat de Google feien que aquesta solució fos extremadament complexa i poc pràctica per a un entorn de bots distribuïts.
-2.  **Solució actual (Proxy GAS)**: Es va optar per la creació d'aquest Proxy a Google Apps Script (GAS). Aquesta arquitectura permet centralitzar la gestió d'OAuth2 i permisos en un sol punt, oferint una API neta i accessible via Web App.
+## 🏛️ Arquitectura del Motor (v55)
+*   **Dispatcher (`handleRequest`)**: És el cor del sistema. No afegeixis noves rutes directes al `doPost`, afegeix-les al mapa `actions`.
+*   **Helper `getParams(e)`**: **ÚS OBLIGATORI**. Aquesta funció unifica paràmetres de l'URL (`e.parameter`) i del body JSON (`e.postData`). Qualsevol funció nova ha d'utilitzar-lo per extreure IDs o dades.
+*   **Grading System**: La funció `gradeSubmission` ha estat simplificada. No intentis fer el "patch" manual de `draftGrade` i `assignedGrade` per separat tret que hi hagi un error de permisos; la funció ja gestiona la conversió a número i el doble enviament.
 
-## 🏛️ Arquitectura i Decisions Clau (v55)
-*   **Unified Params (`getParams`)**: Una de les grans dificultats va ser la inconsistència de com GAS rep les dades (URL params vs JSON body). Hem creat un helper que unifica ambdues fonts, fent que l'API sigui 100% robusta per a qualsevol client.
-*   **Simplified Grading**: Vam haver de refer la lògica de qualificació per superar les limitacions de l'API de Classroom, passant d'un model de "patch" complex a una funció que gestiona automàticament els múltiples estats d'una nota (`draft` vs `assigned`).
+## 🛠️ Procediments Tècnics
+*   **Desplegament**: El repositori està configurat amb `clasp`. No facis desplegaments nous a cegues. Utilitza sempre:
+    ```powershell
+    clasp push
+    clasp version "Descripció"
+    clasp deploy --versionNumber X --deploymentId [ID_ESTABLE]
+    ```
+    L'ID estable és: `AKfycbz5hvlbdd8vumKsAKQNrvwpxM4DUeHo1uMcAZE8vGKTfO4ZXnavqe4CEEGOqkTduMvAtw`.
+*   **Límit de Google**: Estem gestionant el límit de 20 desplagaments. Si l'usuari demana un desplagament nou, verifica primer quants n'hi ha actius amb `clasp deployments`.
 
-## �️ Dificultats Superades
-*   **Límit de Desplegaments**: Google Apps Script té un límit rígid de 20 desplegaments. Hem superat aquesta barrera implementant una metodologia de gestió de versions fixa (veure `DEPLOY_GUIDE.md`) que permet actualitzar el bot sense canviar la URL d'accés.
-*   **Gestió de Permisos de Domini**: Moltes accions (crear cursos, convidar professors externs) fallaven per polítiques de Google Workspace Education. Hem documentat aquests casos a l'API.md per diferenciar clarament els errors de xarxa/codi dels de política de domini.
-*   **Sincronització Local-Núvol**: L'ús de `clasp` ha estat vital per mantenir el control de versions a GitHub mentre es treballa en l'entorn tancat de Google.
-
-## 🚀 Estat Actual
-El projecte es troba en un estat estable amb totes les funcions estandarditzades. L'interfície web (`index.html`) s'ha anat adaptant per oferir tots els camps que el backend permet, garantint que el tester és una representació real del potencial del bot.
+## ⚠️ "Gotchas" i Errors Coneguts
+*   **403 Forbidden**: Molts errors de permisos són de Google Workspace, no de codi. No intentis "arreglar" el codi si l'error és de política de domini.
+*   **Eliminació de Cursos**: Només es poden esborrar (`delete`) si prèviament s'han marcat com a `ARCHIVED` via `patch`.
+*   **Gestió de Temes**: Recentment hem afegit suport complet per a `topicId` a tasques i materials. Verifica sempre que el tema existeix abans d'assignar-lo.
 
 ---
-*Projecte tancat en la Versió 55 estable.* 🦾
+*Informació tècnica actualitzada per a la Versió 55 estable.* 🦾

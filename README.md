@@ -11,15 +11,23 @@
 
 ---
 
-## 🚀 Motiu i Aplicabilitat
+## 🚀 Context i Origen
+Aquest projecte és producte de la mentalitat **Vibecoding**. Neix d'una necessitat real: crear una infraestructura robusta per configurar **bots autònoms o semiautònoms** que puguin gestionar Google Classroom de manera eficient.
 
-Aquest projecte neix de la necessitat d'interactuar amb Google Classroom des d'entorns externs (com bots de Telegram, aplicacions web, sistemes de gestió acadèmica pròpis, etc.) sense haver de lidiar amb la complexa autenticació OAuth2 de Google a cada client.
+### Per què un Proxy a GAS?
+Originalment, es va intentar implementar aquesta solució com un **Model Context Protocol (MCP)**. Tot i que era la idea més puntera tecnològicament, la realitat de Google (gestió de permisos, autenticació OAuth2 i protecció de dominis educatius) ho feia extremadament complicat i poc àgil. 
 
-**Aplicabilitat en projectes reals:**
-*   **Bots Docents:** Un bot de Telegram/Discord que permet als professors crear tasques ràpidament des del mòbil.
-*   **Sincronització Acadèmica:** Connectar el Moodle o ClickEdu de l'escola amb Classroom per crear cursos i alumnes automàticament.
-*   **Automatització d'Anuncis:** Programar anuncis setmanals o recordatoris d'examen automàtics.
-*   **Generació de Butlletins:** Extreure notes de tots els alumnes i generar informes PDF personalitzats.
+Per això, vam optar per aquest **Proxy a Google Apps Script (GAS)**, que ens permet:
+1.  Centralitzar la comunicació amb Google des del propi entorn de Google.
+2.  Oferir una API neta i accessible des de qualsevol entorn extern.
+3.  Simplificar dràsticament la gestió de permisos per als bots finals.
+
+---
+
+## 🛠️ Aplicabilitat en projectes reals
+*   **Bots Docents Autònoms:** Bots que poden rebre ordres de llenguatge natural i executar-les a Classroom.
+*   **Sincronització Acadèmica:** Connectar entorns externs amb Classroom evitant la complexitat d'OAuth a cada microservei.
+*   **Automatització Docent:** Programació massiva d'anuncis o gestió de notes sense intervenció humana constant.
 
 ---
 
@@ -60,5 +68,3 @@ Consulta **[API.md](API.md)** per veure tots els paràmetres i la secció de **P
 *   **Modificar Adjunts**: L'API de Google **no permet** afegir/eleminar materials a una tasca un cop creada. S'han de definir en el moment de la creació.
 
 ---
-
-**Desenvolupat amb ❤️ i molta paciència amb l'API de Google.**
