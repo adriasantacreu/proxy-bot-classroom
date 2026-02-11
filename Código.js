@@ -535,11 +535,28 @@ function gradeSubmission(e) {
   const courseId = data.courseId || e.parameter.courseId;
   const courseWorkId = data.courseWorkId || e.parameter.courseWorkId;
   const id = data.id || e.parameter.id;
-  const updateMask = data.updateMask || "assignedGrade,draftGrade";
-  const studentSubmission = data.submission || {};
 
-  if (!courseId || !courseWorkId || !id) throw new Error("Falten ids (course, courseWork, submission)");
-  return Classroom.Courses.CourseWork.StudentSubmissions.patch(studentSubmission, courseId, courseWorkId, id, { updateMask: updateMask });
+  if (!courseId || !courseWorkId || !id) {
+    throw new Error("Falten IDs obligatoris: courseId, courseWorkId o submissionId (id)");
+  }
+
+  const updateMask = data.updateMask || "assignedGrade,draftGrade";
+  let studentSubmission = data.submission || {};
+  const gradeStr = data.grade || e.parameter.grade;
+
+  if (gradeStr !== undefined && gradeStr !== null && gradeStr !== "") {
+    const numericGrade = Number(gradeStr);
+    if (!isNaN(numericGrade)) {
+      studentSubmission.draftGrade = numericGrade;
+      studentSubmission.assignedGrade = numericGrade;
+    }
+  }
+
+  try {
+    return Classroom.Courses.CourseWork.StudentSubmissions.patch(studentSubmission, courseId, courseWorkId, id, { updateMask: updateMask });
+  } catch (err) {
+    throw new Error(`Error de l'API Classroom al posar nota: ${err.message}`);
+  }
 }
 
 /**
