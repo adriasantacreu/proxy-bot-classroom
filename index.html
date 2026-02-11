@@ -317,6 +317,7 @@
             loader.classList.remove('hidden');
             output.innerHTML = '';
             statusBadge.classList.add('hidden');
+            document.getElementById('btnCopy')?.remove();
 
             try {
                 // Truc: enviem la acció i parametres a la URL i tot l'objecte al body (doble seguretat)
@@ -328,7 +329,23 @@
                 });
                 const json = await response.json();
                 loader.classList.add('hidden');
-                output.innerHTML = syntaxHighlight(json);
+
+                // Formatar i mostrar
+                const formatted = JSON.stringify(json, null, 4);
+                output.innerHTML = syntaxHighlight(formatted);
+
+                // Afegir botó copiar
+                const btnCopy = document.createElement('button');
+                btnCopy.id = "btnCopy";
+                btnCopy.className = "absolute top-12 right-6 bg-slate-800 hover:bg-slate-700 text-slate-400 text-[10px] px-2 py-1 rounded border border-slate-700 transition";
+                btnCopy.innerText = "📋 Copy JSON";
+                btnCopy.onclick = () => {
+                    navigator.clipboard.writeText(formatted);
+                    btnCopy.innerText = "✅ Copied!";
+                    setTimeout(() => btnCopy.innerText = "📋 Copy JSON", 2000);
+                };
+                output.parentElement.appendChild(btnCopy);
+
                 const isErr = json.error || (json.code && json.code >= 400);
                 statusBadge.innerText = isErr ? 'ERROR' : 'SUCCESS';
                 statusBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded ${isErr ? 'bg-red-900 text-red-100' : 'bg-green-900 text-green-100'}`;
@@ -348,10 +365,21 @@
         }
 
         function syntaxHighlight(json) {
-            if (typeof json != 'string') json = JSON.stringify(json, undefined, 2);
+            if (typeof json != 'string') json = JSON.stringify(json, undefined, 4);
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
-                let cls = 'text-yellow-300';
-                if (/^"/.test(match)) { cls = /:$/.test(match) ? 'text-blue-300' : 'text-green-300'; }
+                let cls = 'text-orange-400'; // number
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'text-indigo-300'; // key
+                    } else {
+                        cls = 'text-green-400'; // string
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'text-blue-400'; // boolean
+                } else if (/null/.test(match)) {
+                    cls = 'text-slate-500'; // null
+                }
                 return `<span class="${cls}">${match}</span>`;
             });
         }
