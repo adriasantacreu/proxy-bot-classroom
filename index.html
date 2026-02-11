@@ -173,6 +173,7 @@
         let AVAILABLE_COURSES = [];
         let CACHE_ASSIGNMENTS = {}; // courseId -> assignments[]
         let CACHE_SUBMISSIONS = {}; // assignmentId -> submissions[]
+        let CACHE_STUDENTS = {};    // courseId -> { userId: name }
 
         const formContainer = document.getElementById('dynamicForm');
         const output = document.getElementById('jsonOutput');
@@ -283,17 +284,33 @@
         async function updateSubmissionsDropdown(courseId, courseWorkId, selectElement) {
             selectElement.innerHTML = '<option disabled selected>Loading students...</option>';
             try {
+                // Fetch students first for names
+                if (!CACHE_STUDENTS[courseId]) {
+                    const studentData = await fetchHelper('list_students', { courseId });
+                    const map = {};
+                    if (Array.isArray(studentData)) {
+                        studentData.forEach(s => {
+                            map[s.userId] = s.profile?.name?.fullName || s.userId;
+                        });
+                    }
+                    CACHE_STUDENTS[courseId] = map;
+                }
+
                 const cacheKey = `${courseId}_${courseWorkId}`;
                 if (!CACHE_SUBMISSIONS[cacheKey]) {
                     const data = await fetchHelper('list_submissions', { courseId, courseWorkId });
                     CACHE_SUBMISSIONS[cacheKey] = Array.isArray(data) ? data : [];
                 }
+
                 const subs = CACHE_SUBMISSIONS[cacheKey];
+                const studentMap = CACHE_STUDENTS[courseId];
+
                 selectElement.innerHTML = subs.length ? '' : '<option disabled>No submissions</option>';
                 subs.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.id;
-                    opt.innerText = `Sub: ${s.id.substring(0, 8)}... (User: ${s.userId.substring(0, 8)})`;
+                    const name = studentMap[s.userId] || s.userId;
+                    opt.innerText = `${name} (Score: ${s.draftGrade || s.assignedGrade || 'N/A'})`;
                     selectElement.appendChild(opt);
                 });
             } catch (e) {
@@ -334,7 +351,7 @@
                 let input;
                 if (field.type === 'courseSelect') {
                     input = document.createElement('select');
-                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
+                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white type-courseSelect";
                     AVAILABLE_COURSES.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.id;
@@ -342,22 +359,20 @@
                         input.appendChild(opt);
                     });
                     input.addEventListener('change', () => {
-                        const assSelect = formContainer.querySelector('select[id*="assignmentSelect"]');
+                        const assSelect = formContainer.querySelector('.type-assignmentSelect');
                         if (assSelect) updateAssignmentsDropdown(input.value, assSelect);
                     });
                 } else if (field.type === 'assignmentSelect') {
                     input = document.createElement('select');
-                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
-                    input.id = `input-${field.id}`;
+                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white type-assignmentSelect";
                     input.addEventListener('change', () => {
-                        const subSelect = formContainer.querySelector('select[id*="submissionSelect"]');
-                        const courseId = formContainer.querySelector('select[id*="courseId"]')?.value;
+                        const subSelect = formContainer.querySelector('.type-submissionSelect');
+                        const courseId = formContainer.querySelector('.type-courseSelect')?.value;
                         if (subSelect && courseId) updateSubmissionsDropdown(courseId, input.value, subSelect);
                     });
                 } else if (field.type === 'submissionSelect') {
                     input = document.createElement('select');
-                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
-                    input.id = `input-${field.id}`;
+                    input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white type-submissionSelect";
                 } else if (field.type === 'textarea') {
                     input = document.createElement('textarea');
                     input.rows = 3;
@@ -368,7 +383,7 @@
                     input.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white";
                 }
 
-                if (!input.id) input.id = `input-${field.id}`;
+                input.id = `input-${field.id}`;
                 input.placeholder = field.placeholder || '';
                 div.appendChild(label);
                 div.appendChild(input);
