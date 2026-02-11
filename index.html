@@ -161,7 +161,8 @@
                     class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex items-center justify-center z-10 font-mono text-xs text-blue-500">
                     <span class="animate-pulse">PETITION IN PROGRESS...</span>
                 </div>
-                <div class="flex-1 overflow-auto p-6 font-mono text-xs leading-relaxed" id="jsonOutput">
+                <div class="flex-1 overflow-auto p-6 font-mono text-xs leading-relaxed whitespace-pre bg-slate-950"
+                    id="jsonOutput">
                     <span class="text-slate-800">// No result yet.</span>
                 </div>
             </div>
@@ -261,9 +262,19 @@
                 if (field.isJson) {
                     const b = document.createElement('button');
                     b.innerText = " (template)";
-                    b.className = "text-blue-500 underline ml-2";
+                    b.className = "text-blue-500 underline ml-2 hover:text-blue-400";
                     b.onclick = (ev) => { ev.preventDefault(); input.value = EXAMPLE_MATERIALS; };
+
+                    const f = document.createElement('button');
+                    f.innerText = " (auto-format)";
+                    f.className = "text-green-500 underline ml-2 hover:text-green-400";
+                    f.onclick = (ev) => {
+                        ev.preventDefault();
+                        try { input.value = JSON.stringify(JSON.parse(input.value), null, 4); } catch (e) { alert("JSON invàlid!"); }
+                    };
+
                     label.appendChild(b);
+                    label.appendChild(f);
                 }
 
                 let input;
