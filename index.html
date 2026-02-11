@@ -135,7 +135,14 @@
                             <input type="password" id="apiKey" value="pk_classroom_T9xR4mLw2vQ7nBs5jK8yF3hU6dP1aZ0c"
                                 autocomplete="off"
                                 class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-[10px] font-mono pr-10 text-slate-800 dark:text-slate-200">
-                            <button onclick="toggleKey()"
+                            <button onclick="toggleKey('apiKey')"
+                                class="absolute right-3 top-2 text-slate-400 hover:text-slate-600">👁️</button>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="aiKey" value="" placeholder="Google AI Key (Gemma-3)"
+                                autocomplete="off"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-[10px] font-mono pr-10 text-slate-800 dark:text-slate-200">
+                            <button onclick="toggleKey('aiKey')"
                                 class="absolute right-3 top-2 text-slate-400 hover:text-slate-600">👁️</button>
                         </div>
                         <button onclick="checkConnectionAndLoadCourses()"
@@ -363,9 +370,9 @@
             document.getElementById('themeIcon').innerText = '☀️';
         }
 
-        function toggleKey() {
-            const i = document.getElementById('apiKey');
-            i.type = i.type === 'password' ? 'text' : 'password';
+        function toggleKey(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
         }
 
         async function fetchHelper(action, params = {}) {
@@ -592,6 +599,12 @@
                 btnAI.className = "absolute top-12 right-32 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-3 py-1 rounded transition flex items-center gap-1";
                 btnAI.innerHTML = "<span>✨</span> Explica amb IA";
                 btnAI.onclick = async () => {
+                    const aiKey = document.getElementById('aiKey').value;
+                    if (!aiKey) {
+                        alert("Posa la teva Google AI Key al panell de configuració!");
+                        return;
+                    }
+
                     const aiContainer = document.createElement('div');
                     aiContainer.id = "aiLoadingMsg";
                     aiContainer.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 animate-pulse";
@@ -603,25 +616,32 @@
                     btnAI.innerHTML = "<span>⏳</span> Pensant...";
 
                     try {
-                        const aiRes = await fetch(`${url}?action=explain_json&key=${key}`, {
+                        const prompt = `Ets un assistent expert en Google Classroom. 
+                        Explica en català de forma molt senzilla i amable per a un professor què ha passat amb aquest resultat JSON.
+                        Si és una llista, resumeix quants elements hi ha. Si és un error, digues què ha fallat.
+                        NO usis codi, només text explicatiu.
+                        Resultat: ${JSON.stringify(json)}`;
+
+                        const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${aiKey}`, {
                             method: 'POST',
-                            headers: { "Content-Type": "text/plain;charset=utf-8" },
-                            body: JSON.stringify({ action: 'explain_json', key, json_content: json })
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                         });
                         const aiJson = await aiRes.json();
                         aiContainer.classList.remove('animate-pulse');
 
-                        if (aiJson.explanation) {
-                            aiContainer.innerHTML = `<b>✨ Explicació IA:</b><br>${aiJson.explanation.replace(/\n/g, '<br>')}`;
+                        if (aiJson.candidates && aiJson.candidates[0].content.parts[0].text) {
+                            const explanation = aiJson.candidates[0].content.parts[0].text;
+                            aiContainer.innerHTML = `<b>✨ Explicació IA:</b><br>${explanation.replace(/\n/g, '<br>')}`;
                             aiContainer.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 leading-relaxed shadow-sm";
                             btnAI.remove();
                         } else {
-                            throw new Error(aiJson.error || "La IA no ha pogut generar una resposta.");
+                            throw new Error(aiJson.error?.message || "La IA no ha pogut generar una resposta.");
                         }
                     } catch (e) {
                         aiContainer.classList.remove('animate-pulse');
                         aiContainer.className = "mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-[11px] text-red-700 dark:text-red-300";
-                        aiContainer.innerHTML = `<b>❌ Error de la IA:</b><br>${e.message}`;
+                        aiContainer.innerHTML = `<b>❌ Error de la IA (Client):</b><br>${e.message}`;
                         btnAI.disabled = false;
                         btnAI.classList.remove('opacity-50', 'cursor-not-allowed');
                         btnAI.innerHTML = "<span>✨</span> Reintentar IA";
