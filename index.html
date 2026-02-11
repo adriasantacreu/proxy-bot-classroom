@@ -582,6 +582,33 @@
                 };
                 output.parentElement.appendChild(btnCopy);
 
+                // Afegir botó IA
+                const btnAI = document.createElement('button');
+                btnAI.id = "btnAI";
+                btnAI.className = "absolute top-12 right-32 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-3 py-1 rounded transition flex items-center gap-1";
+                btnAI.innerHTML = "<span>✨</span> Explica amb IA";
+                btnAI.onclick = async () => {
+                    btnAI.disabled = true;
+                    btnAI.innerHTML = "<span>⏳</span> Pensant...";
+                    try {
+                        const aiRes = await fetch(`${url}?action=explain_json&key=${key}`, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'explain_json', key, json_content: json })
+                        });
+                        const aiJson = await aiRes.json();
+                        if (aiJson.explanation) {
+                            const aiDiv = document.createElement('div');
+                            aiDiv.className = "mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 leading-relaxed shadow-sm animate-in fade-in slide-in-from-top-2 duration-500";
+                            aiDiv.innerHTML = `<b>✨ Explicació IA:</b><br>${aiJson.explanation.replace(/\n/g, '<br>')}`;
+                            output.prepend(aiDiv);
+                            btnAI.remove(); // Un cop explicat, el traiem
+                        }
+                    } catch (e) {
+                        btnAI.innerHTML = "❌ AI Error";
+                    }
+                };
+                output.parentElement.appendChild(btnAI);
+
                 const isErr = json.error || (json.code && json.code >= 400);
                 statusBadge.innerText = isErr ? 'ERROR' : 'SUCCESS';
                 statusBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded ${isErr ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100' : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100'}`;

@@ -96,7 +96,10 @@ function handleRequest(e) {
     // Gestió de Fitxers i Organització
     "upload_to_classroom": uploadToClassroom,
     "upload_file": uploadFile,
-    "move_to_topic": moveToTopic
+    "move_to_topic": moveToTopic,
+
+    // AI Helper
+    "explain_json": explainWithAI
   };
 
   try {
@@ -117,6 +120,42 @@ function handleRequest(e) {
       stack: err.stack
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * Utilitza intel·ligència artificial per explicar un JSON de Classroom.
+ */
+function explainWithAI(e) {
+  const GOOGLE_AI_KEY = PropertiesService.getScriptProperties().getProperty("GOOGLE_AI_KEY");
+  if (!GOOGLE_AI_KEY) throw new Error("Falta GOOGLE_AI_KEY a les propietats de l'script");
+
+  const data = getPayload(e);
+  const jsonToExplain = data.json_content;
+  if (!jsonToExplain) throw new Error("Falta 'json_content' per explicar");
+
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemma-2-27b-it:generateContent?key=${GOOGLE_AI_KEY}`;
+
+  const prompt = `Actua com un assistent expert en Google Classroom per a professors no tècnics. 
+  Explica en català de forma senzilla i amable què significa el següent resultat JSON d'una operació de l'API. 
+  No usis tecnicismes si no és necessari. Si és un error, explica com solucionar-ho. 
+  Resultat JSON: ${JSON.stringify(jsonToExplain)}`;
+
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }]
+  };
+
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload)
+  };
+
+  const response = UrlFetchApp.fetch(apiUrl, options);
+  const result = JSON.parse(response.getContentText());
+
+  return {
+    explanation: result.candidates[0].content.parts[0].text
+  };
 }
 
 // ==========================================
